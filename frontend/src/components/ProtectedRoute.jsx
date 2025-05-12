@@ -5,7 +5,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/authContext";
 
 // A simple ProtectedRoute component that wraps around the element to protect
-const ProtectedRoute = ({ element, ...rest }) => {
+const ProtectedRoute = ({ element}) => {
   const { isAuthenticated } = useAuth(); // Access the authentication status from AuthContext
 
   return isAuthenticated ? (

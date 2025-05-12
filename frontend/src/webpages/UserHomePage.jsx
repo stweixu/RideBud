@@ -1,8 +1,25 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { AuthContext } from "../contexts/authContext";
+import { useAuth } from "../contexts/authContext";
+import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
 
 const UserHomePage = () => {
+
+  const { user, logout } = useAuth(); // Access the logout function from the auth context
+  const Navigate = useNavigate(); // Initialize useNavigate for navigation
+
+  const handleLogout = async (e) => {
+    e.preventDefault();
+    try {
+      // Call the logout function from context (this will also hit the /api/logout endpoint)
+      await logout(); 
+      Navigate("/login"); // Navigate to login page after logout
+    } catch (error) {
+      console.error("Logout failed:", error); // Handle error if logout fails
+    }
+  };
+
+
   return (
     <div>
       {/* Navbar */}
@@ -12,24 +29,19 @@ const UserHomePage = () => {
           <Link to="/profile">
             <button className="button">Profile</button>
           </Link>
-          <Link to="/">
             <button
               className="button logout-button"
-              onClick={(e) => {
-                e.preventDefault();
-                localStorage.removeItem("token"); // Remove token from local storage
-              }}
+              onClick={handleLogout} // Call handleLogout on button click
             >
               Logout
             </button>
-          </Link>
         </div>
       </nav>
 
       {/* Home Page Content */}
       <div className="home-content">
         <h1 className="welcome-title">Welcome to the Home Page!</h1>
-        <p>Your application is now live. Customize this page as you need.</p>
+        <p>Welcome {user ? user.displayName : "User"}.</p>
       </div>
 
       {/* Inline styles at the bottom */}

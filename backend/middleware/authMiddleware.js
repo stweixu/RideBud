@@ -1,11 +1,10 @@
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.JWT_SECRET;
 
-const userAuth = (req, res, next) => {
-  const token = req.header("x-auth-token");
-
+const verifyToken = (req, res, next) => {
+  const token = req.cookies.token; // Get the token from cookies
   if (!token) {
-    return res.status(401).json({ msg: "No token, authorization denied" });
+    return res.status(200).json({ isAuthenticated: false, msg: "No token" });
   }
 
   try {
@@ -13,13 +12,14 @@ const userAuth = (req, res, next) => {
     const decoded = jwt.verify(token, JWT_SECRET);
 
     // Attach user info to the request object
-    req.user = decoded.userId;
+    req.user = decoded;
+
 
     // Move on to the next middleware or route handler
     next();
   } catch (err) {
-    res.status(401).json({ msg: "Token is not valid" });
+    res.status(200).json({ isAuthenticated: false, msg: "Invalid token" });
   }
 };
 
-module.exports = userAuth;
+module.exports = { verifyToken };

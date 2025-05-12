@@ -31,9 +31,16 @@ const loginUserController = async (req, res) => {
       // secure: process.env.NODE_ENV === "production", // Ensure cookies are sent over HTTPS in production
       sameSite: "Strict", // Prevents CSRF attacks
       maxAge: 3600000 * 4, // Set the expiry time (1 hour in this case)
+      path: "/",
     });
 
-    res.status(200).json({ msg: "Login successful" });
+    res.status(200).json({ msg: "Login successful",
+      user: {
+        id: user._id,
+        name: user.displayName,
+      // Add any other user info you want to send back
+      },
+    });
   } catch (err) {
     res.status(500).json({ msg: "Server error" });
   }

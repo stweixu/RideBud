@@ -30,15 +30,19 @@ export default function LoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: fullEmail, password: form.password }),
+        credentials: "include", // Include cookies in the request
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Login failed");
+      if (!res.ok) {
+        // Get the error message from the response body
+        const data = await res.json();
+        throw new Error(data.msg || "Login failed");
+      }
 
-      localStorage.setItem("token", data.token);
-      login(data.token); // Call the login function from the auth context
+      login(); // Call the login function from the auth context
       Navigate("/home"); // Redirect to home page after successful login
     } catch (err) {
+      console.error("Login error:", err);
       setError(err.message);
     } finally {
       setLoading(false);

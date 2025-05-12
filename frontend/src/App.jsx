@@ -19,16 +19,16 @@ const App = () => {
         <Routes>
           <Route
             path="/"
-            element={isAuthenticated ? <Navigate to="/home" /> : <LoginPage />}
+            element={!isAuthenticated ? <LoginPage /> : <Navigate to="/home" /> }
           />
           <Route
             path="/login"
-            element={isAuthenticated ? <Navigate to="/home" /> : <LoginPage />}
+            element={!isAuthenticated ? <LoginPage /> : <Navigate to="/home" /> }
           />
           <Route
             path="/register"
             element={
-              isAuthenticated ? <Navigate to="/home" /> : <RegistrationPage />
+              !isAuthenticated ? <RegistrationPage /> : <Navigate to="/home" />
             }
           />
 

@@ -1,3 +1,5 @@
+// apiRouter.js
+
 const express = require("express");
 const router = express.Router();
 
@@ -5,12 +7,18 @@ const router = express.Router();
 const locationRouter = require("./locationRouter");
 const registerRouter = require("./registerRouter");
 const loginRouter = require("./loginRouter");
+const logOutRouter = require("./logOutRouter");
+const authCheckRouter = require("./authCheckRouter");
+const meRouter = require("./meRouter");
 
 // Define the routeMap object to map paths to routers
 const routeMap = {
   "/register": registerRouter,
   "/login": loginRouter,
   "/location": locationRouter,
+  "/logout": logOutRouter,
+  "/auth-check": authCheckRouter,
+  "/me": meRouter,
 };
 
 // Dynamically use routes from the routeMap object
