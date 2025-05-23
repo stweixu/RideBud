@@ -1,5 +1,8 @@
 const bcrypt = require("bcryptjs");
-const User = require("../models/User"); // Assuming you have a User model
+const PendingUser = require("../models/PendingUser");
+const User = require("../models/User");
+const { transporter } = require("../utility/email");
+const jwt = require("jsonwebtoken");
 
 const registerUserController = async (req, res) => {
   const { displayName, email, password } = req.body;
@@ -13,18 +16,33 @@ const registerUserController = async (req, res) => {
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
+    const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+      expiresIn: "10m",
+    });
+    // OR: const token = crypto.randomBytes(32).toString("hex");
 
-    // Create a new user
-    const newUser = new User({
-      email,
-      password: hashedPassword,
-      displayName,
+    await PendingUser.updateOne(
+      { email },
+      {
+        $set: {
+          displayName,
+          password: hashedPassword,
+          verifyToken: token,
+          verifyExpiresAt: Date.now() + 10 * 60 * 1000,
+        },
+      },
+      { upsert: true }
+    );
+
+    const verifyLink = `http://localhost:5000/api/verify?token=${token}`;
+
+    await transporter.sendMail({
+      to: email,
+      subject: "Verify your RideBud account",
+      text: `Click this link to verify your email: ${verifyLink}`,
     });
 
-    // Save the user
-    await newUser.save();
-
-    return res.status(201).json({ message: "User registered successfully" });
+    return res.status(201).json({ message: "Email link sent successfully" });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server error" });

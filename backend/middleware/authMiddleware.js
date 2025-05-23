@@ -1,3 +1,5 @@
+// middleware/authMiddleware.js
+
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -13,7 +15,6 @@ const verifyToken = (req, res, next) => {
 
     // Attach user info to the request object
     req.user = decoded;
-
 
     // Move on to the next middleware or route handler
     next();
