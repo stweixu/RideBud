@@ -5,7 +5,12 @@ import {
   Route,
   Routes,
 } from "react-router-dom"; // Import Routes instead of Switch
-import { RegistrationPage, UserHomePage, LoginPage } from "./webpages"; // Import your pages
+import {
+  RegistrationPage,
+  UserHomePage,
+  LoginPage,
+  UserProfile,
+} from "./webpages"; // Import your pages
 import { useAuth } from "./contexts/authContext"; // Import the useAuth hook
 import ProtectedRoute from "./components/ProtectedRoute"; // Import ProtectedRoute
 import "font-awesome/css/font-awesome.min.css";
@@ -19,11 +24,11 @@ const App = () => {
         <Routes>
           <Route
             path="/"
-            element={!isAuthenticated ? <LoginPage /> : <Navigate to="/home" /> }
+            element={!isAuthenticated ? <LoginPage /> : <Navigate to="/home" />}
           />
           <Route
             path="/login"
-            element={!isAuthenticated ? <LoginPage /> : <Navigate to="/home" /> }
+            element={!isAuthenticated ? <LoginPage /> : <Navigate to="/home" />}
           />
           <Route
             path="/register"
@@ -39,7 +44,7 @@ const App = () => {
             }
           />
 
-          {/* Fallback Route (Page not found) */}
+          <Route path="/preview" element={<UserProfile />} />
           <Route path="*" element={<div>Page Not Found</div>} />
         </Routes>
       </div>
