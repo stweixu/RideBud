@@ -4,6 +4,7 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Calendar as CalendarComponent } from "./ui/calendar";
+import { ReactTimePicker } from "./ui/timepicker";
 import {
   Select,
   SelectContent,
@@ -12,6 +13,7 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Badge } from "./ui/badge";
+import { generateTimeIntervals } from "../lib/time-utils"; // Adjust path if needed
 
 const SearchFilters = ({ onSearch = () => {} }) => {
   const [filters, setFilters] = useState({
@@ -68,7 +70,17 @@ const SearchFilters = ({ onSearch = () => {} }) => {
           <div className="relative flex-grow">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 size-5" />
             <Input
-              placeholder="Search for routes, destinations..."
+              placeholder="Search for pick up points..."
+              className="pl-10 pr-4 h-11 w-full"
+              value={filters.searchQuery}
+              onChange={handleSearchChange}
+            />
+          </div>
+
+          <div className="relative flex-grow">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 size-5" />
+            <Input
+              placeholder="Search for destinations..."
               className="pl-10 pr-4 h-11 w-full"
               value={filters.searchQuery}
               onChange={handleSearchChange}
@@ -100,9 +112,9 @@ const SearchFilters = ({ onSearch = () => {} }) => {
             </PopoverContent>
           </Popover>
 
-          {/* Location dropdown */}
+          {/* Location dropdown
           <Select onValueChange={handleLocationChange} value={filters.location}>
-            <SelectTrigger className="h-11 min-w-[180px]">
+            <SelectTrigger className="h-11 min-w-[180px] w-10">
               <div className="flex items-center gap-2">
                 <MapPin size={18} />
                 <SelectValue placeholder="Location" />
@@ -117,21 +129,28 @@ const SearchFilters = ({ onSearch = () => {} }) => {
               <SelectItem value="west">West Area</SelectItem>
             </SelectContent>
           </Select>
+          
 
-          {/* Time of day dropdown */}
+          {/* Time of day dropdown           */}
+
           <Select onValueChange={handleTimeChange} value={filters.timeOfDay}>
-            <SelectTrigger className="h-11 min-w-[180px]">
+            <SelectTrigger className="h-11 min-w-[180px] w-12">
               <div className="flex items-center gap-2">
                 <Clock size={18} />
-                <SelectValue placeholder="Time of day" />
+                <SelectValue placeholder="Time of day" />{" "}
+                {/* Keep your original placeholder */}
               </div>
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="max-h-60 text-center">
+              {/* Keep your "Any time" option, using the original "all" value */}
               <SelectItem value="all">Any time</SelectItem>
-              <SelectItem value="morning">Morning (5am-12pm)</SelectItem>
-              <SelectItem value="afternoon">Afternoon (12pm-5pm)</SelectItem>
-              <SelectItem value="evening">Evening (5pm-9pm)</SelectItem>
-              <SelectItem value="night">Night (9pm-5am)</SelectItem>
+
+              {/* Dynamically generate and render the 20-minute interval options */}
+              {generateTimeIntervals(20).map((time) => (
+                <SelectItem key={time} value={time}>
+                  {time}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
@@ -144,7 +163,7 @@ const SearchFilters = ({ onSearch = () => {} }) => {
           </Button>
         </div>
 
-        {/* Filter options */}
+        {/* Filter options
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1 text-sm text-gray-600">
             <Filter size={16} />
@@ -203,8 +222,9 @@ const SearchFilters = ({ onSearch = () => {} }) => {
             Verified drivers
           </Button>
         </div>
+                  */}
 
-        {/* Active filters */}
+        {/* Active filters                  
         {filters.activeFilters.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-3">
             {filters.activeFilters.map((filter) => (
@@ -235,8 +255,9 @@ const SearchFilters = ({ onSearch = () => {} }) => {
                 Clear all
               </Button>
             )}
-          </div>
-        )}
+            
+          </div>                
+        )}          */}
       </div>
     </div>
   );

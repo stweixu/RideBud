@@ -13,7 +13,7 @@ const NavbarButton = ({
   variant = "ghost",
 }) => {
   const navbarClassName =
-    "h-11 text-white hover:bg-green-700 flex items-center py-2 px-3 text-base hover:text-gray-300";
+    "h-11 text-white hover:bg-green-700 flex items-center py-2 px-3 text-base hover:text-white";
 
   return (
     <Button variant={variant} className={navbarClassName} onClick={onClick}>
@@ -51,8 +51,8 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 w-full h-16 bg-green-600 text-white shadow-md z-50">
       <div className="container mx-auto h-full px-4 flex items-center justify-between">
         <Link className="flex items-center" to="/login">
-          <Car size={48} className="mr-2" />
-          <h1 className="text-2xl font-bold">RideBud</h1>
+          <Car size={40} className="mr-3" />
+          <h1 className="text-3xl font-bold">RideBud</h1>
         </Link>
 
         <div className="flex items-center space-x-4">

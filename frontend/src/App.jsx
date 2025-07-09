@@ -9,11 +9,12 @@ import {
   RegistrationPage,
   UserHomePage,
   LoginPage,
-  UserProfile,
+  PreviewPage,
 } from "./webpages"; // Import your pages
 import { useAuth } from "./contexts/authContext"; // Import the useAuth hook
 import ProtectedRoute from "./components/ProtectedRoute"; // Import ProtectedRoute
 import "font-awesome/css/font-awesome.min.css";
+import CreateRidePage from "./webpages/CreateRidePage"; // Import CreateRidePage
 
 const App = () => {
   const { isAuthenticated } = useAuth(); // Access authentication status
@@ -40,11 +41,18 @@ const App = () => {
           <Route
             path="/home"
             element={
-              <ProtectedRoute element={<UserHomePage />} /> // Protect the UserHomePage route
+              <ProtectedRoute element={<UserHomePage />} /> // Protect the UserHomePage route by checking server authentication
             }
           />
 
-          <Route path="/preview" element={<UserProfile />} />
+          <Route
+            path="/create-ride"
+            element={
+              <ProtectedRoute element={<CreateRidePage />} /> // Protect the UserHomePage route by checking server authentication
+            }
+          />
+
+          <Route path="/preview" element={<PreviewPage />} />
           <Route path="*" element={<div>Page Not Found</div>} />
         </Routes>
       </div>
