@@ -10,11 +10,14 @@ import {
   UserHomePage,
   LoginPage,
   PreviewPage,
+  CreateRidePage,
+  PageNotFound,
+  ProfilePage,
+  MyRidesPage,
 } from "./webpages"; // Import your pages
 import { useAuth } from "./contexts/authContext"; // Import the useAuth hook
 import ProtectedRoute from "./components/ProtectedRoute"; // Import ProtectedRoute
 import "font-awesome/css/font-awesome.min.css";
-import CreateRidePage from "./webpages/CreateRidePage"; // Import CreateRidePage
 
 const App = () => {
   const { isAuthenticated } = useAuth(); // Access authentication status
@@ -41,19 +44,33 @@ const App = () => {
           <Route
             path="/home"
             element={
-              <ProtectedRoute element={<UserHomePage />} /> // Protect the UserHomePage route by checking server authentication
+              <ProtectedRoute element={<UserHomePage />} /> // Protect the route by checking server authentication
             }
           />
 
           <Route
             path="/create-ride"
             element={
-              <ProtectedRoute element={<CreateRidePage />} /> // Protect the UserHomePage route by checking server authentication
+              <ProtectedRoute element={<CreateRidePage />} /> // Protect the route by checking server authentication
+            }
+          />
+
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute element={<ProfilePage />} /> // Protect the route by checking server authentication
+            }
+          />
+
+          <Route
+            path="/my-rides"
+            element={
+              <ProtectedRoute element={<MyRidesPage />} /> // Protect the route by checking server authentication
             }
           />
 
           <Route path="/preview" element={<PreviewPage />} />
-          <Route path="*" element={<div>Page Not Found</div>} />
+          <Route path="*" element={<PageNotFound />} />
         </Routes>
       </div>
     </Router>

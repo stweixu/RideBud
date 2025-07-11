@@ -14,8 +14,9 @@ import {
   MessageCircle,
 } from "lucide-react";
 import Navbar from "@/components/navbar";
+import BrandFooter from "@/components/BrandFooter";
 
-export default function ProfilePage({
+export default function MyRidesPage({
   onContactDriver = () => console.log("Contact driver"),
   onCancelRide = () => console.log("Cancel ride"),
 }) {
@@ -130,19 +131,19 @@ export default function ProfilePage({
     switch (status) {
       case "upcoming":
         return (
-          <Badge className="bg-blue-50 text-blue-700 border-blue-200">
+          <Badge className="bg-blue-50 hover:bg-blue-50 text-blue-700 border-blue-200">
             Upcoming
           </Badge>
         );
       case "completed":
         return (
-          <Badge className="bg-green-50 text-green-700 border-green-200">
+          <Badge className="bg-green-50 hover:bg-green-50 text-green-700 border-green-200">
             Completed
           </Badge>
         );
       case "cancelled":
         return (
-          <Badge className="bg-red-50 text-red-700 border-red-200">
+          <Badge className="bg-red-50 text-red-700 border-red-200 hover:bg-red-50">
             Cancelled
           </Badge>
         );
@@ -183,6 +184,13 @@ export default function ProfilePage({
                 <span className="font-normal">{ride.route.destination}</span>
               </p>
             </div>
+
+            <Badge
+              variant="outline"
+              className="bg-green-50 text-green-700 border-green-200 ml-auto"
+            >
+              ${ride.price.toFixed(2)}
+            </Badge>
           </div>
 
           <div className="flex items-center gap-4">
@@ -204,21 +212,15 @@ export default function ProfilePage({
                 {ride.passengers === 1 ? "passenger" : "passengers"}
               </p>
             </div>
-            <Badge
-              variant="outline"
-              className="bg-green-50 text-green-700 border-green-200"
-            >
-              ${ride.price.toFixed(2)}
-            </Badge>
           </div>
 
-          {ride.notes && (
+          {/*   {ride.notes && (
             <div className="bg-gray-50 p-3 rounded-md">
               <p className="text-xs text-gray-600">
                 <strong>Note:</strong> {ride.notes}
               </p>
             </div>
-          )}
+          )} */}
         </div>
 
         {ride.status === "upcoming" && (
@@ -229,22 +231,14 @@ export default function ProfilePage({
               className="flex-1"
               onClick={() => onContactDriver(ride.id)}
             >
-              <Phone className="h-4 w-4 mr-2" />
-              Contact Driver
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1"
-              onClick={() => onContactDriver(ride.id)}
-            >
               <MessageCircle className="h-4 w-4 mr-2" />
-              Message
+              Message Ridebud
             </Button>
             <Button
               variant="destructive"
               size="sm"
               onClick={() => onCancelRide(ride.id)}
+              className="flex-1"
             >
               Cancel
             </Button>
@@ -255,10 +249,10 @@ export default function ProfilePage({
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
-      <main className="container mx-auto px-4 py-6">
-        <div className="max-w-2xl mx-auto">
+      <main className="container mx-auto px-4 py-6 flex-grow">
+        <div className="max-w-xl mx-auto">
           <h1 className="text-3xl font-bold mb-6 text-gray-800">My Rides</h1>
 
           <Tabs defaultValue="current" className="w-full">
@@ -312,7 +306,8 @@ export default function ProfilePage({
             </TabsContent>
           </Tabs>
         </div>
-      </main>
+      </main>{" "}
+      <BrandFooter />
     </div>
   );
 }

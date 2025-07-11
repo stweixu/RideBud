@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react"; // Import useRef
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,7 @@ import {
   Users,
   DollarSign,
 } from "lucide-react";
-import Navbar from "./Navbar";
+// import Navbar from "./Navbar";
 
 const CreateRide = ({
   onSubmit = () => console.log("Carpool request submitted"),
@@ -39,6 +39,8 @@ const CreateRide = ({
     notes: "",
   });
 
+  const timeInputRef = useRef(null);
+
   const handleInputChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
   };
@@ -50,11 +52,10 @@ const CreateRide = ({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="container mx-auto px-4 py-6 pt-20">
-        <div className="max-w-2xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6 text-gray-800">
-            Create Carpool Request
+      <main className="container mx-auto px-4 py-6">
+        <div className="max-w-lg mx-auto">
+          <h1 className="text-2xl font-bold mb-6 text-gray-800">
+            Create Ridebud Request
           </h1>
 
           <Card className="bg-white shadow-md">
@@ -67,8 +68,11 @@ const CreateRide = ({
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Pickup Location */}
                 <div className="space-y-2">
-                  <Label htmlFor="pickup" className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-green-600" />
+                  <Label
+                    htmlFor="pickup"
+                    className="flex items-center gap-2 text-sm"
+                  >
+                    <MapPin className="h-5 w-5 text-green-600" />
                     Pickup Location
                   </Label>
                   <Input
@@ -78,6 +82,7 @@ const CreateRide = ({
                     onChange={(e) =>
                       handleInputChange("pickupLocation", e.target.value)
                     }
+                    className="h-11"
                     required
                   />
                 </div>
@@ -86,9 +91,9 @@ const CreateRide = ({
                 <div className="space-y-2">
                   <Label
                     htmlFor="destination"
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 text-sm"
                   >
-                    <MapPin className="h-4 w-4 text-green-600" />
+                    <MapPin className="h-5 w-5 text-green-600" />
                     Destination
                   </Label>
                   <Input
@@ -98,6 +103,7 @@ const CreateRide = ({
                     onChange={(e) =>
                       handleInputChange("destination", e.target.value)
                     }
+                    className="h-11"
                     required
                   />
                 </div>
@@ -105,15 +111,15 @@ const CreateRide = ({
                 {/* Date and Time */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="flex items-center gap-2">
-                      <CalendarIcon className="h-4 w-4 text-green-600" />
+                    <Label className="flex items-center gap-2 text-sm">
+                      <CalendarIcon className="h-5 w-5 text-green-600" />
                       Date
                     </Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
-                          className="w-full justify-start text-left font-normal"
+                          className="w-full justify-start text-left font-normal h-11"
                         >
                           {formData.date ? (
                             formData.date.toLocaleDateString()
@@ -133,28 +139,49 @@ const CreateRide = ({
                     </Popover>
                   </div>
 
+                  {/* Preferred Time - Modified to be fully clickable */}
                   <div className="space-y-2">
-                    <Label htmlFor="time" className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-green-600" />
+                    <Label
+                      htmlFor="time-input-trigger" // Changed htmlFor to match the button's ID
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <Clock className="h-5 w-5 text-green-600" />
                       Preferred Time
                     </Label>
-                    <Input
-                      id="time"
-                      type="time"
-                      value={formData.time}
-                      onChange={(e) =>
-                        handleInputChange("time", e.target.value)
-                      }
-                      required
-                    />
+                    <Button
+                      id="time-input-trigger" // ID for label association
+                      variant="outline" // Match your other input styles
+                      className="w-full justify-start text-left font-normal h-11 relative" // Added relative for positioning
+                      onClick={() => timeInputRef.current?.showPicker()} // Trigger native time picker
+                    >
+                      {formData.time ? (
+                        <span>{formData.time}</span>
+                      ) : (
+                        <span className="text-gray-500">Select time</span>
+                      )}
+                      {/* Hidden native input to handle time selection */}
+                      <Input
+                        ref={timeInputRef}
+                        id="time" // Keep original ID for form data
+                        type="time"
+                        value={formData.time}
+                        onChange={(e) =>
+                          handleInputChange("time", e.target.value)
+                        }
+                        className="absolute inset-0 opacity-0 cursor-pointer z-10" // Make it cover the button and be invisible
+                        required
+                        // Disable browser's default picker for this element if desired, but showPicker is better
+                        // style={{ appearance: 'none' }} // Uncomment if you want to remove default browser controls visually
+                      />
+                    </Button>
                   </div>
                 </div>
 
                 {/* Passengers and Max Price */}
                 <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                   <div className="space-y-2 flex-grow">
-                    <Label className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-green-600" />
+                    <Label className="flex items-center gap-2 text-sm">
+                      <Users className="h-5 w-5 text-green-600" />
                       Number of Passengers
                     </Label>
                     <Select
@@ -163,7 +190,7 @@ const CreateRide = ({
                         handleInputChange("passengers", value)
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="h-11">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -174,41 +201,25 @@ const CreateRide = ({
                   </div>
                 </div>
 
-                {/*
-                <div className="space-y-2">
-                  <Label htmlFor="maxPrice" className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-green-600" />
-                    Maximum Price ($)
-                  </Label>
-                  <Input
-                    id="maxPrice"
-                    type="number"
-                    placeholder="0.00"
-                    min="0"
-                    step="0.50"
-                    value={formData.maxPrice}
-                    onChange={(e) =>
-                      handleInputChange("maxPrice", e.target.value)
-                    }
-                  />
-                </div>
-
                 {/* Additional Notes */}
                 <div className="space-y-2">
-                  <Label htmlFor="notes">Additional Notes (Optional)</Label>
+                  <Label htmlFor="notes" className="text-sm">
+                    Additional Notes (Optional)
+                  </Label>
                   <Textarea
                     id="notes"
                     placeholder="Any special requirements or additional information..."
                     value={formData.notes}
                     onChange={(e) => handleInputChange("notes", e.target.value)}
                     rows={3}
+                    className="h-24"
                   />
                 </div>
 
                 {/* Submit Button */}
                 <Button
                   type="submit"
-                  className="w-full bg-green-600 hover:bg-green-700 text-white py-3"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white py-3 h-11"
                 >
                   Submit Carpool Request
                 </Button>

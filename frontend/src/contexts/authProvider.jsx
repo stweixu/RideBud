@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div></div>;
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, login, logout, user }}>
