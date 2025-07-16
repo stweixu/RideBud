@@ -113,12 +113,8 @@ const HomepageRideList = ({ carpoolRides = [] }) => {
   return (
     <div className="bg-gray-50 min-h-full w-full p-3 md:p-4 lg:p-6">
       <div className="mb-3 md:mb-4">
-        <h2 className="text-xl md:text-2xl font-semibold text-gray-800">
-          Browse the Marketplace for a RideBud
-        </h2>
-
-        <p className="text-sm md:text-md text-gray-500">
-          {ridesToDisplay.length} carpools available
+        <p className="text-md md:text-lg text-gray-500">
+          {ridesToDisplay.length} rides listing found
         </p>
       </div>
 

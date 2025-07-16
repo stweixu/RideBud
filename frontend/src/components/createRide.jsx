@@ -24,7 +24,7 @@ import {
   Users,
   DollarSign,
 } from "lucide-react";
-// import Navbar from "./Navbar";
+// import Navbar from "./Navbar"; // This line is commented out, assuming it's not needed or imported elsewhere
 
 const CreateRide = ({
   onSubmit = () => console.log("Carpool request submitted"),
@@ -34,7 +34,8 @@ const CreateRide = ({
     destination: "",
     date: undefined,
     time: "",
-    passengers: "1",
+    // FIX: Initialize passengers to undefined so the placeholder shows
+    passengers: undefined, // Changed from "1"
     maxPrice: "",
     notes: "",
   });
@@ -142,36 +143,33 @@ const CreateRide = ({
                   {/* Preferred Time - Modified to be fully clickable */}
                   <div className="space-y-2">
                     <Label
-                      htmlFor="time-input-trigger" // Changed htmlFor to match the button's ID
+                      htmlFor="time-input-trigger"
                       className="flex items-center gap-2 text-sm"
                     >
                       <Clock className="h-5 w-5 text-green-600" />
                       Preferred Time
                     </Label>
                     <Button
-                      id="time-input-trigger" // ID for label association
-                      variant="outline" // Match your other input styles
-                      className="w-full justify-start text-left font-normal h-11 relative" // Added relative for positioning
-                      onClick={() => timeInputRef.current?.showPicker()} // Trigger native time picker
+                      id="time-input-trigger"
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal h-11 relative"
+                      onClick={() => timeInputRef.current?.showPicker()}
                     >
                       {formData.time ? (
                         <span>{formData.time}</span>
                       ) : (
                         <span className="text-gray-500">Select time</span>
                       )}
-                      {/* Hidden native input to handle time selection */}
                       <Input
                         ref={timeInputRef}
-                        id="time" // Keep original ID for form data
+                        id="time"
                         type="time"
                         value={formData.time}
                         onChange={(e) =>
                           handleInputChange("time", e.target.value)
                         }
-                        className="absolute inset-0 opacity-0 cursor-pointer z-10" // Make it cover the button and be invisible
+                        className="absolute inset-0 opacity-0 cursor-pointer z-10"
                         required
-                        // Disable browser's default picker for this element if desired, but showPicker is better
-                        // style={{ appearance: 'none' }} // Uncomment if you want to remove default browser controls visually
                       />
                     </Button>
                   </div>
@@ -191,17 +189,28 @@ const CreateRide = ({
                       }
                     >
                       <SelectTrigger className="h-11">
-                        <SelectValue />
+                        <SelectValue
+                          placeholder="Select number of passengers" // Placeholder text
+                          className="text-lg " // Class for both placeholder and selected value
+                        />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="1">1 passenger</SelectItem>
-                        <SelectItem value="2">2 passengers</SelectItem>
+                        {/* Ensure consistency for dropdown item text size */}
+                        <SelectItem value="1" className="text-sm">
+                          {" "}
+                          {/* Changed from text-sm */}1 passenger
+                        </SelectItem>
+                        <SelectItem value="2" className="text-sm">
+                          {" "}
+                          {/* Changed from text-sm */}2 passengers
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
-                {/* Additional Notes */}
+                {/* Additional Notes (commented out as per previous request) */}
+                {/*
                 <div className="space-y-2">
                   <Label htmlFor="notes" className="text-sm">
                     Additional Notes (Optional)
@@ -215,13 +224,14 @@ const CreateRide = ({
                     className="h-24"
                   />
                 </div>
+                */}
 
                 {/* Submit Button */}
                 <Button
                   type="submit"
                   className="w-full bg-green-600 hover:bg-green-700 text-white py-3 h-11"
                 >
-                  Submit Carpool Request
+                  Submit Ridebud Request
                 </Button>
               </form>
             </CardContent>

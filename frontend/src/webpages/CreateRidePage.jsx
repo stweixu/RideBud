@@ -5,7 +5,7 @@ import BrandFooter from "@/components/BrandFooter";
 
 const CreateRidePage = () => {
   return (
-    <div className="min-h-screen w-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
       <main className="container mx-auto flex-grow">
         <CreateRide />

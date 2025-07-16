@@ -12,18 +12,62 @@ import {
   Calendar,
   Phone,
   MessageCircle,
+  Navigation,
 } from "lucide-react";
 import Navbar from "@/components/navbar";
 import BrandFooter from "@/components/BrandFooter";
 
+import {
+  // Imports for Dialog
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+
+import ChatBubble from "@/components/ChatBubble";
+
 export default function MyRidesPage({
-  onContactDriver = () => console.log("Contact driver"),
   onCancelRide = () => console.log("Cancel ride"),
 }) {
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [currentChatReceiver, setCurrentChatReceiver] = useState(null);
+  const [currentRideDetails, setCurrentRideDetails] = useState(null);
+
+  const openChatDialog = (receiver, rideDetails) => {
+    setCurrentChatReceiver(receiver);
+    setCurrentRideDetails(rideDetails);
+    setIsChatOpen(true);
+  };
+
+  const [myNextUpcomingRide] = useState({
+    id: "upcoming-special",
+    rideBuddy: {
+      id: "buddy-john-do",
+      name: "John Doe",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=john",
+      phone: "+1 (555) 987-6543",
+    },
+    route: {
+      start: "Home",
+      ridePickup: "Library",
+      rideDropoff: "Train Station",
+      destination: "Downtown",
+      directions: "Take Main St, then turn left at 5th Ave.",
+    },
+    departureDate: "2025-07-20",
+    departureTime: "10:00 AM",
+    status: "confirmed", // This is an upcoming ride
+    price: 9.5,
+  });
+
   const [currentRides] = useState([
     {
       id: "1",
-      driver: {
+      rideBuddy: {
+        id: "passenger-sarah-sm",
         name: "Sarah Smith",
         avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah",
         rating: 4.9,
@@ -32,8 +76,10 @@ export default function MyRidesPage({
       route: {
         origin: "Downtown Plaza",
         destination: "Airport Terminal 1",
+        directions:
+          "From Downtown Plaza, head towards Main St, then follow signs for Airport Terminal 1.",
       },
-      date: "2024-01-15",
+      date: "2024-07-25", // Changed date to be upcoming
       time: "08:30",
       status: "upcoming",
       price: 15.5,
@@ -42,7 +88,8 @@ export default function MyRidesPage({
     },
     {
       id: "2",
-      driver: {
+      rideBuddy: {
+        id: "passenger-mike-jo",
         name: "Mike Johnson",
         avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=mike",
         rating: 4.7,
@@ -51,11 +98,28 @@ export default function MyRidesPage({
       route: {
         origin: "University Campus",
         destination: "Tech Park",
+        directions:
+          "From University Campus, take the shuttle to Innovation Drive, then walk to Tech Park.",
       },
-      date: "2024-01-18",
+      date: "2024-07-28", // Changed date to be upcoming
       time: "17:00",
       status: "upcoming",
       price: 8.5,
+      passengers: 2,
+    },
+    {
+      id: "6",
+      rideBuddy: null,
+      route: {
+        origin: "Home",
+        destination: "Gym",
+        directions:
+          "Simple route: Left on Elm Street, right on Oak Avenue. Gym is on the left.",
+      },
+      date: "2024-07-20", // Changed date to be upcoming
+      time: "09:00",
+      status: "upcoming",
+      price: 5.0,
       passengers: 1,
     },
   ]);
@@ -63,7 +127,8 @@ export default function MyRidesPage({
   const [pastRides] = useState([
     {
       id: "3",
-      driver: {
+      rideBuddy: {
+        id: "passenger-emily-ch",
         name: "Emily Chen",
         avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=emily",
         rating: 4.9,
@@ -72,16 +137,19 @@ export default function MyRidesPage({
       route: {
         origin: "Riverside Apartments",
         destination: "Shopping District",
+        directions:
+          "Via Riverside Blvd, then straight to the Shopping District parking.",
       },
-      date: "2024-01-10",
+      date: "2024-07-10", // Changed date to be past
       time: "11:30",
       status: "completed",
       price: 10.0,
-      passengers: 1,
+      passengers: 2,
     },
     {
       id: "4",
-      driver: {
+      rideBuddy: {
+        id: "passenger-david-wi",
         name: "David Wilson",
         avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=david",
         rating: 4.6,
@@ -90,8 +158,9 @@ export default function MyRidesPage({
       route: {
         origin: "North Hills",
         destination: "Downtown",
+        directions: "From North Hills, take I-5 South to Downtown exit.",
       },
-      date: "2024-01-08",
+      date: "2024-07-08", // Changed date to be past
       time: "13:00",
       status: "completed",
       price: 14.0,
@@ -99,17 +168,14 @@ export default function MyRidesPage({
     },
     {
       id: "5",
-      driver: {
-        name: "Lisa Brown",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=lisa",
-        rating: 4.8,
-        phone: "+1 (555) 678-9012",
-      },
+      rideBuddy: null,
       route: {
         origin: "Eastside Park",
         destination: "Business District",
+        directions:
+          "Follow Park Ave, then turn into Financial Street towards Business District.",
       },
-      date: "2024-01-05",
+      date: "2024-07-05", // Changed date to be past
       time: "14:15",
       status: "cancelled",
       price: 16.5,
@@ -130,6 +196,7 @@ export default function MyRidesPage({
   const getStatusBadge = (status) => {
     switch (status) {
       case "upcoming":
+      case "confirmed":
         return (
           <Badge className="bg-blue-50 hover:bg-blue-50 text-blue-700 border-blue-200">
             Upcoming
@@ -143,7 +210,7 @@ export default function MyRidesPage({
         );
       case "cancelled":
         return (
-          <Badge className="bg-red-50 text-red-700 border-red-200 hover:bg-red-50">
+          <Badge className="bg-red-50 text-red-700 border-red-50 hover:bg-red-50">
             Cancelled
           </Badge>
         );
@@ -152,101 +219,205 @@ export default function MyRidesPage({
     }
   };
 
-  const RideCard = ({ ride }) => (
-    <Card className="bg-white shadow-md hover:shadow-lg transition-shadow">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <Avatar>
-              <AvatarImage src={ride.driver.avatar} alt={ride.driver.name} />
-              <AvatarFallback>{ride.driver.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <div>
-              <h3 className="font-medium">{ride.driver.name}</h3>
-              <div className="flex items-center text-xs text-yellow-500">
-                <Star className="h-4 w-4 fill-yellow-500 mr-1" />
-                <span>{ride.driver.rating.toFixed(1)}</span>
+  // RideCard component - now contains its own Dialog for directions
+  const RideCard = ({ ride, openChatDialog, onCancelRide }) => {
+    const [isDirectionsDialogOpen, setIsDirectionsDialogOpen] = useState(false);
+    const directionsText =
+      ride.route?.directions ||
+      `Directions for ${ride.route.origin} to ${ride.route.destination}:\n\n` +
+        "• Start your journey.\n" +
+        "• Follow general navigation.\n" +
+        "• Arrive at destination.";
+
+    // Determine the hover class based on ride status
+    let hoverClass = "";
+    if (ride.status === "upcoming" || ride.status === "confirmed") {
+      hoverClass = "hover:bg-blue-50"; // Yellow for upcoming/current
+    } else if (ride.status === "cancelled") {
+      hoverClass = "hover:bg-red-50"; // Red for cancelled past rides
+    } else {
+      hoverClass = "hover:bg-green-50"; // Green for completed past rides
+    }
+
+    return (
+      <Dialog
+        open={isDirectionsDialogOpen}
+        onOpenChange={setIsDirectionsDialogOpen}
+      >
+        <DialogTrigger asChild>
+          <Card
+            className={`bg-white shadow-md hover:shadow-lg transition-shadow cursor-pointer ${hoverClass}`}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <Avatar>
+                    <AvatarImage
+                      src={ride.rideBuddy?.avatar || ""}
+                      alt={ride.rideBuddy?.name || "N/A"}
+                    />
+                    <AvatarFallback>
+                      {ride.rideBuddy?.name.charAt(0) || "P"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h3 className="font-medium">
+                      {ride.rideBuddy?.name || "No Ridebud Yet"}
+                    </h3>
+                    {ride.rideBuddy && (
+                      <div className="flex items-center text-xs text-yellow-500">
+                        <Star className="h-4 w-4 fill-yellow-500 mr-1" />
+                        <span>
+                          {ride.rideBuddy.rating?.toFixed(1) || "N/A"}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {getStatusBadge(ride.status)}
               </div>
-            </div>
-          </div>
-          {getStatusBadge(ride.status)}
-        </div>
 
-        <div className="space-y-3 mb-4">
-          <div className="flex items-start gap-2">
-            <MapPin className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
+              <div className="space-y-3 mb-4">
+                <div className="flex items-start gap-2">
+                  <MapPin className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-xs font-medium">
+                      From:{" "}
+                      <span className="font-normal">{ride.route.origin}</span>
+                    </p>
+                    <p className="text-xs font-medium">
+                      To:{" "}
+                      <span className="font-normal">
+                        {ride.route.destination}
+                      </span>
+                    </p>
+                  </div>
+
+                  <Badge
+                    variant="outline"
+                    className="bg-green-50 text-green-700 border-green-200 ml-auto"
+                  >
+                    ${ride.price?.toFixed(2) || "0.00"}
+                  </Badge>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-green-600" />
+                    <p className="text-xs">{formatDate(ride.date)}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-green-600" />
+                    <p className="text-xs">{ride.time}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-green-600" />
+                    <p className="text-xs">
+                      {ride.passengers}{" "}
+                      {ride.passengers === 1 ? "person" : "people"} in carpool
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {ride.status === "upcoming" && (
+                <div className="flex gap-2">
+                  {/* Phone Ridebud Button */}
+                  {ride.rideBuddy &&
+                    ride.rideBuddy.phone && ( // Check if rideBuddy and their phone number exist
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent dialog from opening
+                          // Use tel: protocol to initiate a phone call
+                          window.location.href = `tel:${ride.rideBuddy.phone}`;
+                        }}
+                      >
+                        <Phone className="h-4 w-4 mr-2" />
+                        Call Ridebud
+                      </Button>
+                    )}
+                  {ride.passengers === 2 && ride.rideBuddy && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent dialog from opening
+                        openChatDialog(ride.rideBuddy, {
+                          date: ride.date,
+                          time: ride.time,
+                          origin: ride.route.origin,
+                          destination: ride.route.destination,
+                        });
+                      }}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Message Ridebud
+                    </Button>
+                  )}
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent dialog from opening
+                      onCancelRide(ride.id);
+                    }}
+                    className={`hover:bg-red-800 ${
+                      ride.passengers === 2 && ride.rideBuddy
+                        ? "flex-1"
+                        : "w-full"
+                    }`}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </DialogTrigger>
+
+        {/* DIRECTIONS DIALOG CONTENT for THIS specific RideCard */}
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Journey Directions</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-sm text-gray-600">
+              <strong>Route:</strong> {ride.route.origin} →{" "}
+              {ride.route.destination}
+            </div>
             <div>
-              <p className="text-xs font-medium">
-                From: <span className="font-normal">{ride.route.origin}</span>
-              </p>
-              <p className="text-xs font-medium">
-                To:{" "}
-                <span className="font-normal">{ride.route.destination}</span>
-              </p>
+              <label
+                htmlFor={`directions-textarea-${ride.id}`}
+                className="text-sm font-medium mb-2 block"
+              >
+                Detailed Directions (one per line):
+              </label>
+              <Textarea
+                id={`directions-textarea-${ride.id}`}
+                value={directionsText}
+                placeholder="• Head north on Main Street for 0.5 miles&#10;• Turn right onto Highway 101 and continue for 8.2 miles&#10;• Take Exit 15 toward Airport Boulevard"
+                className="min-h-[120px] resize-none"
+                readOnly
+              />
             </div>
-
-            <Badge
-              variant="outline"
-              className="bg-green-50 text-green-700 border-green-200 ml-auto"
-            >
-              ${ride.price.toFixed(2)}
-            </Badge>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-green-600" />
-              <p className="text-xs">{formatDate(ride.date)}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-green-600" />
-              <p className="text-xs">{ride.time}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-green-600" />
-              <p className="text-xs">
-                {ride.passengers}{" "}
-                {ride.passengers === 1 ? "passenger" : "passengers"}
-              </p>
-            </div>
-          </div>
-
-          {/*   {ride.notes && (
-            <div className="bg-gray-50 p-3 rounded-md">
-              <p className="text-xs text-gray-600">
-                <strong>Note:</strong> {ride.notes}
-              </p>
-            </div>
-          )} */}
-        </div>
-
-        {ride.status === "upcoming" && (
-          <div className="flex gap-2">
             <Button
-              variant="outline"
-              size="sm"
-              className="flex-1"
-              onClick={() => onContactDriver(ride.id)}
+              className="w-full bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => setIsDirectionsDialogOpen(false)}
             >
-              <MessageCircle className="h-4 w-4 mr-2" />
-              Message Ridebud
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => onCancelRide(ride.id)}
-              className="flex-1"
-            >
-              Cancel
+              Got It!
             </Button>
           </div>
-        )}
-      </CardContent>
-    </Card>
-  );
+        </DialogContent>
+      </Dialog>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -268,7 +439,12 @@ export default function MyRidesPage({
             <TabsContent value="current" className="space-y-4">
               {currentRides.length > 0 ? (
                 currentRides.map((ride) => (
-                  <RideCard key={ride.id} ride={ride} />
+                  <RideCard
+                    key={ride.id}
+                    ride={ride}
+                    openChatDialog={openChatDialog}
+                    onCancelRide={onCancelRide}
+                  />
                 ))
               ) : (
                 <Card className="bg-white">
@@ -287,7 +463,14 @@ export default function MyRidesPage({
 
             <TabsContent value="past" className="space-y-4">
               {pastRides.length > 0 ? (
-                pastRides.map((ride) => <RideCard key={ride.id} ride={ride} />)
+                pastRides.map((ride) => (
+                  <RideCard
+                    key={ride.id}
+                    ride={ride}
+                    openChatDialog={openChatDialog}
+                    onCancelRide={onCancelRide}
+                  />
+                ))
               ) : (
                 <Card className="bg-white">
                   <CardContent className="flex flex-col items-center justify-center py-12 text-center">
@@ -306,8 +489,21 @@ export default function MyRidesPage({
             </TabsContent>
           </Tabs>
         </div>
-      </main>{" "}
+      </main>
       <BrandFooter />
+
+      {/* GLOBAL CHAT BUBBLE DIALOG (remains global) */}
+      <ChatBubble
+        isOpen={isChatOpen}
+        setIsOpen={setIsChatOpen}
+        receiverId={currentChatReceiver?.id || null}
+        receiverName={currentChatReceiver?.name || null}
+        receiverAvatar={currentChatReceiver?.avatar || null}
+        rideDate={currentRideDetails?.date || null}
+        rideTime={currentRideDetails?.time || null}
+        rideOrigin={currentRideDetails?.origin || null}
+        rideDestination={currentRideDetails?.destination || null}
+      />
     </div>
   );
 }
