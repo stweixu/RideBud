@@ -12,6 +12,9 @@ const authCheckRouter = require("./session-management/authCheckRouter");
 const meRouter = require("./user-profile/meRouter");
 const verifyEmailRouter = require("./account-creation/verifyEmailRouter");
 const updateProfileRouter = require("./user-profile/updateProfileRouter");
+const changePasswordRouter = require("./user-profile/changePasswordRouter");
+const changeEmailRouter = require("./user-profile/changeEmailRouter");
+const verifyEmailChangeRouter = require("./user-profile/verifyChangedEmail");
 
 // Define the routeMap object to map paths to routers
 const routeMap = {
@@ -23,6 +26,9 @@ const routeMap = {
   "/me": meRouter,
   "/verify": verifyEmailRouter,
   "/update-profile": updateProfileRouter,
+  "/change-password": changePasswordRouter,
+  "/change-email": changeEmailRouter,
+  "/verify-email-change": verifyEmailChangeRouter,
 };
 
 // Dynamically use routes from the routeMap object

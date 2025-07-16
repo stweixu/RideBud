@@ -1,9 +1,11 @@
+//controller/changePasswordController.js
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 
 const changePasswordController = async (req, res) => {
+  console.log("Controller hit with body:", req.body);
   const { oldPassword, newPassword } = req.body;
-  const userId = req.user.id; // Assuming user ID is available in req.user
+  const userId = req.user.userId; // Assuming user ID is available in req.user
 
   try {
     // Find the user by ID

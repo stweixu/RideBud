@@ -18,7 +18,7 @@ app.use(
     credentials: true, // allow cookies to be sent
   })
 );
-app.use(express.json()); // Parse JSON bodies
+
 app.use(cookieParser());
 
 app.use("/api", apiRouter); // All routes in apiRouter.js will be prefixed with /api

@@ -130,17 +130,23 @@ export default function ProfilePage() {
         body: JSON.stringify(dataToSend),
       });
 
-      const result = await response.json();
+      const data = await response.json(); // Renamed result to data for consistency
 
       if (!response.ok) {
-        if (result.errors) {
-          const errorMessages = result.errors.map((err) => err.msg).join(", ");
-          throw new Error(errorMessages);
+        let errorMessage = "Failed to update profile."; // Default generic message
+        if (data.errors) {
+          errorMessage = data.errors.map((err) => err.msg).join(", ");
+        } else if (data.msg) {
+          // Check for 'msg' field
+          errorMessage = data.msg;
+        } else if (data.message) {
+          // Check for 'message' field
+          errorMessage = data.message;
         }
-        throw new Error(result.message || "Failed to update profile.");
+        throw new Error(errorMessage);
       }
 
-      setSaveSuccess(result.message || "Profile updated successfully!");
+      setSaveSuccess(data.message || "Profile updated successfully!"); // Use data.message
       setIsEditing(false);
       // Re-fetch user data to update the context and ensure consistency
       const updatedUserData = await fetchUserData();
@@ -190,23 +196,31 @@ export default function ProfilePage() {
           body: JSON.stringify({
             oldPassword: passwordData.oldPassword,
             newPassword: passwordData.newPassword,
+            confirmPassword: passwordData.confirmPassword, // Ensure confirmPassword is sent
           }),
         }
       );
 
-      const result = await response.json();
+      const data = await response.json(); // Renamed result to data for consistency
 
       if (!response.ok) {
-        if (result.errors) {
-          const errorMessages = result.errors.map((err) => err.msg).join(", ");
-          throw new Error(errorMessages);
+        let errorMessage = "Failed to change password."; // Default generic message
+        if (data.errors) {
+          // For express-validator errors
+          errorMessage = data.errors.map((err) => err.msg).join(", ");
+        } else if (data.msg) {
+          // For your custom messages like "User not found" or "Current password incorrect"
+          errorMessage = data.msg;
+        } else if (data.message) {
+          // For other generic messages
+          errorMessage = data.message;
         }
-        throw new Error(result.message || "Failed to change password.");
+        throw new Error(errorMessage);
       }
 
       setPasswordChangeSuccess(
-        result.message || "Password changed successfully!"
-      );
+        data.message || "Password changed successfully!"
+      ); // Use data.message
       setPasswordData({
         oldPassword: "",
         newPassword: "",
@@ -236,6 +250,7 @@ export default function ProfilePage() {
     }
 
     try {
+      // Updated endpoint to /api/change-email
       const response = await fetch("http://localhost:5000/api/change-email", {
         method: "PATCH",
         headers: {
@@ -245,20 +260,26 @@ export default function ProfilePage() {
         body: JSON.stringify({ newEmail }),
       });
 
-      const result = await response.json();
+      const data = await response.json(); // Renamed result to data for consistency
 
       if (!response.ok) {
-        if (result.errors) {
-          const errorMessages = result.errors.map((err) => err.msg).join(", ");
-          throw new Error(errorMessages);
+        let errorMessage = "Failed to change email."; // Default generic message
+        if (data.errors) {
+          errorMessage = data.errors.map((err) => err.msg).join(", ");
+        } else if (data.msg) {
+          // Check for 'msg' field
+          errorMessage = data.msg;
+        } else if (data.message) {
+          // Check for 'message' field
+          errorMessage = data.message;
         }
-        throw new Error(result.message || "Failed to change email.");
+        throw new Error(errorMessage);
       }
 
       setEmailVerificationSent(true); // Indicate that verification link was sent
       setEmailChangeSuccess(
-        result.message || "Verification link sent to new email!"
-      );
+        data.message || "Verification link sent to new email!"
+      ); // Use data.message
       // Optionally, update the email in profileData immediately or after successful verification
       // For now, we'll wait for the user to verify via email.
       // setTimeout(() => setShowEmailDialog(false), 3000); // Close after showing success
