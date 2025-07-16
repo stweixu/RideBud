@@ -5,12 +5,13 @@ const router = express.Router();
 
 // Import individual route modules
 const locationRouter = require("./locationRouter");
-const registerRouter = require("./registerRouter");
-const loginRouter = require("./loginRouter");
+const registerRouter = require("./account-creation/registerRouter");
+const loginRouter = require("./session-management/loginRouter");
 const logOutRouter = require("./logOutRouter");
 const authCheckRouter = require("./authCheckRouter");
-const meRouter = require("./meRouter");
-const verifyEmailRouter = require("./verifyEmailRouter");
+const meRouter = require("./user-profile/meRouter");
+const verifyEmailRouter = require("./account-creation/verifyEmailRouter");
+const updateProfileRouter = require("./user-profile/updateProfileRouter");
 
 // Define the routeMap object to map paths to routers
 const routeMap = {
@@ -21,6 +22,7 @@ const routeMap = {
   "/auth-check": authCheckRouter,
   "/me": meRouter,
   "/verify": verifyEmailRouter,
+  "/update-profile": updateProfileRouter,
 };
 
 // Dynamically use routes from the routeMap object

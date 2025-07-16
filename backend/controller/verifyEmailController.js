@@ -16,7 +16,7 @@ const verifyEmailController = async (req, res) => {
     if (!pendingUser || pendingUser.verifyExpiresAt < Date.now()) {
       return res
         .status(400)
-        .redirect("http://localhost:5173/register?error=true");
+        .redirect("http://localhost:5173/register?pendingUserError=true");
     }
 
     // Check if the email is already registered
@@ -29,6 +29,7 @@ const verifyEmailController = async (req, res) => {
       email: pendingUser.email,
       password: pendingUser.password,
       displayName: pendingUser.displayName,
+      dateOfBirth: pendingUser.dateOfBirth,
     });
 
     await PendingUser.deleteOne({ _id: pendingUser._id });
@@ -36,7 +37,7 @@ const verifyEmailController = async (req, res) => {
     res.redirect("http://localhost:5173/login?verified=true");
   } catch (err) {
     console.error(err);
-    res.redirect("http://localhost:5173/register?error=true");
+    res.redirect("http://localhost:5173/register?userError=true");
   }
 };
 
