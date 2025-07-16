@@ -5,7 +5,8 @@ import SearchFilters from "../components/SearchFilter";
 import BrandFooter from "@/components/BrandFooter";
 import { Button } from "../components/ui/button"; // Adjust the import path as necessary
 import HomepageRideList from "../components/HomepageRideList"; // Adjust the import path as necessary
-import UpcomingRideBar from "@/components/UpcomingRideBar";
+import UpcomingRideCard from "@/components/UpcomingRideCard";
+import ChatBubble from "@/components/ChatBubble";
 
 const UserHomePage = () => {
   const Navigate = useNavigate();
@@ -13,8 +14,8 @@ const UserHomePage = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
-      <main className="container mx-auto px-4 pb-6 flex flex-col space-y-3 flex-grow">
-        <UpcomingRideBar />
+      <main className="container mx-auto px-4 pb-6 flex flex-col flex-grow ">
+        <UpcomingRideCard />
         <SearchFilters />
 
         <div

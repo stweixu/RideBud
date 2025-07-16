@@ -73,7 +73,7 @@ function Calendar({
         caption_label: cn(
           "select-none font-medium",
           captionLayout === "label"
-            ? "text-xs"
+            ? "text-md"
             : "[&>svg]:text-muted-foreground flex h-8 items-center gap-1 rounded-md pl-2 pr-1 text-xs [&>svg]:size-3.5",
           defaultClassNames.caption_label
         ),

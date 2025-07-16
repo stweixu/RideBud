@@ -4,17 +4,6 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Calendar as CalendarComponent } from "./ui/calendar";
-import { Label } from "./ui/label";
-import { ReactTimePicker } from "./ui/timepicker";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
-import { Badge } from "./ui/badge";
-import { generateTimeIntervals } from "../lib/time-utils";
 
 const SearchFilters = ({ onSearch = () => {} }) => {
   const [filters, setFilters] = useState({
@@ -74,8 +63,11 @@ const SearchFilters = ({ onSearch = () => {} }) => {
   };
 
   return (
-    <div className="mb-2 md:mb-3 lg:mb-4 w-[90%] bg-white p-3 md:p-4 shadow-sm border-b border-gray-200 mx-auto">
+    <div className="w-[90%] bg-white p-3 md:p-4 shadow-sm border-b border-gray-200 mx-auto mt-4 mb-2">
       <div className=" max-w-6xl mx-auto">
+        <h2 className="text-xl md:text-2xl font-semibold text-gray-800 mb-3">
+          Browse the Marketplace for RideBuds
+        </h2>
         {/* Search bar */}
         <div className="flex flex-col md:flex-row gap-3 md:gap-4 mb-1 md:mb-2">
           <div className="relative flex-grow">
@@ -103,7 +95,7 @@ const SearchFilters = ({ onSearch = () => {} }) => {
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                className="h-8 md:h-9 flex items-center justify-start gap-2 w-full  md:w-40"
+                className="h-8 md:h-9 flex items-center justify-start gap-2 w-full  md:w-40 font-normal"
               >
                 <Calendar className="size-3 md:size-4" />
                 {filters.date ? (

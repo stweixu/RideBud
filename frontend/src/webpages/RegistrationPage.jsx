@@ -4,10 +4,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { User, Mail, Lock, Phone, Eye, EyeOff, Car } from "lucide-react";
+import {
+  User,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Calendar, // Keep Calendar icon for the date picker trigger
+} from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import LogoBar from "@/components/logoBar";
 import BrandFooter from "@/components/BrandFooter";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar"; // Your custom Calendar component
 
 export default function RegistrationPage() {
   const navigate = useNavigate();
@@ -17,7 +30,7 @@ export default function RegistrationPage() {
     email: "",
     password: "",
     confirmPassword: "",
-    phone: "",
+    dateOfBirth: undefined, // Correctly initialized to undefined for date picker
     agreeToTerms: false,
   });
 
@@ -46,17 +59,19 @@ export default function RegistrationPage() {
     }
   };
 
+  // Dedicated handler for dateOfBirth from CalendarComponent
+  const handleDateOfBirthChange = (date) => {
+    setFormData({ ...formData, dateOfBirth: date });
+    if (validationErrors.dateOfBirth) {
+      setValidationErrors({ ...validationErrors, dateOfBirth: "" });
+    }
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
     if (!formData.displayName.trim()) {
       newErrors.displayName = "Display name is required";
-    }
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = "First name is required";
-    }
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = "Last name is required";
     }
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
@@ -72,9 +87,19 @@ export default function RegistrationPage() {
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
     }
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Phone number is required";
+
+    // --- Date of Birth validation ---
+    if (!formData.dateOfBirth) {
+      newErrors.dateOfBirth = "Date of birth is required";
+    } else if (
+      formData.dateOfBirth instanceof Date &&
+      isNaN(formData.dateOfBirth.getTime())
+    ) {
+      // Check if it's an invalid Date object
+      newErrors.dateOfBirth = "Invalid Date of birth";
     }
+    // --- End Date of Birth validation ---
+
     if (!formData.agreeToTerms) {
       newErrors.agreeToTerms = "You must agree to the terms and conditions";
     }
@@ -100,7 +125,7 @@ export default function RegistrationPage() {
             email: formData.email,
             password: formData.password,
             confirmPassword: formData.confirmPassword,
-            phone: formData.phone,
+            dateOfBirth: formData.dateOfBirth,
           }),
         });
 
@@ -120,9 +145,7 @@ export default function RegistrationPage() {
           email: "",
           password: "",
           confirmPassword: "",
-          firstName: "",
-          lastName: "",
-          phone: "",
+          dateOfBirth: undefined,
           agreeToTerms: false,
         });
       } catch (err) {
@@ -183,6 +206,7 @@ export default function RegistrationPage() {
                 )}
               </div>
 
+              {/* Email */}
               <div className="space-y-2">
                 <Label
                   htmlFor="email"
@@ -209,6 +233,7 @@ export default function RegistrationPage() {
                 )}
               </div>
 
+              {/* Password */}
               <div className="space-y-2">
                 <Label
                   htmlFor="password"
@@ -249,6 +274,7 @@ export default function RegistrationPage() {
                 )}
               </div>
 
+              {/* Confirm Password */}
               <div className="space-y-2">
                 <Label
                   htmlFor="confirmPassword"
@@ -289,66 +315,72 @@ export default function RegistrationPage() {
                 )}
               </div>
 
+              {/* Date of Birth picker */}
               <div className="space-y-2">
                 <Label
-                  htmlFor="phone"
+                  htmlFor="dateOfBirth"
                   className="flex items-center gap-2 text-sm"
                 >
-                  <Phone className="h-4 w-4 text-green-600" />
-                  Phone Number
+                  <Calendar className="h-4 w-4 text-green-600" />
+                  Date of Birth
                 </Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  placeholder="+1 (555) 123-4567"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className={`h-10 ${
-                    validationErrors.phone ? "border-red-500" : ""
-                  }`}
-                />
-                {validationErrors.phone && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={`h-10 flex items-center justify-start gap-2 w-full font-normal ${
+                        validationErrors.dateOfBirth ? "border-red-500" : ""
+                      }`}
+                    >
+                      <Calendar className="size-4" />
+                      {formData.dateOfBirth ? (
+                        <span className="font-normal">
+                          {formData.dateOfBirth.toLocaleDateString()}
+                        </span>
+                      ) : (
+                        <span className="text-gray-500 text-sm">
+                          Select your date of birth
+                        </span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={formData.dateOfBirth}
+                      onSelect={handleDateOfBirthChange} // Use the dedicated handler
+                      initialFocus
+                      captionLayout="dropdown"
+                      fromYear={1900}
+                      toYear={new Date().getFullYear() - 10} // Set to current year minus 10
+                    />
+                  </PopoverContent>
+                </Popover>
+                {validationErrors.dateOfBirth && (
                   <p className="text-red-500 text-xs">
-                    {validationErrors.phone}
+                    {validationErrors.dateOfBirth}
                   </p>
                 )}
               </div>
-
-              {/* Location (Commented Out) */}
-              {/*
-              <div className="space-y-2">
-                <Label htmlFor="location" className="flex items-center gap-2 text-sm">
-                  <MapPin className="h-4 w-4 text-green-600" />
-                  Location
-                </Label>
-                <Input
-                  id="location"
-                  name="location"
-                  placeholder="City, State"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  className={`h-10 ${validationErrors.location ? "border-red-500" : ""}`}
-                />
-                {validationErrors.location && (
-                  <p className="text-red-500 text-xs">{validationErrors.location}</p>
-                )}
-              </div>
-              */}
 
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="terms"
                   name="agreeToTerms"
                   checked={formData.agreeToTerms}
-                  onCheckedChange={(checked) =>
-                    handleInputChange({
-                      target: {
-                        name: "agreeToTerms",
-                        value: checked,
-                        type: "checkbox",
-                      },
-                    })
-                  }
+                  onCheckedChange={(checked) => {
+                    // Corrected handler for Shadcn Checkbox
+                    setFormData((prevData) => ({
+                      ...prevData,
+                      agreeToTerms: checked,
+                    }));
+                    if (validationErrors.agreeToTerms) {
+                      setValidationErrors((prevErrors) => ({
+                        ...prevErrors,
+                        agreeToTerms: "",
+                      }));
+                    }
+                  }}
                 />
                 <Label htmlFor="terms" className="text-xs text-gray-600">
                   I agree to the{" "}
