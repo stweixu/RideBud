@@ -1,88 +1,45 @@
 import React from "react";
-import { Link } from "react-router-dom";
-import { useAuth } from "../contexts/authContext";
-import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
+import { Link as RouterLink, useNavigate } from "react-router-dom";
+import Navbar from "../components/Navbar";
+import SearchFilters from "../components/SearchFilter";
+import BrandFooter from "@/components/BrandFooter";
+import { Button } from "../components/ui/button"; // Adjust the import path as necessary
+import HomepageRideList from "../components/HomepageRideList"; // Adjust the import path as necessary
+import UpcomingRideBar from "@/components/UpcomingRideBar";
 
 const UserHomePage = () => {
-
-  const { user, logout } = useAuth(); // Access the logout function from the auth context
-  const Navigate = useNavigate(); // Initialize useNavigate for navigation
-
-  const handleLogout = async (e) => {
-    e.preventDefault();
-    try {
-      // Call the logout function from context (this will also hit the /api/logout endpoint)
-      await logout(); 
-      Navigate("/login"); // Navigate to login page after logout
-    } catch (error) {
-      console.error("Logout failed:", error); // Handle error if logout fails
-    }
-  };
-
+  const Navigate = useNavigate();
 
   return (
-    <div>
-      {/* Navbar */}
-      <nav className="navbar">
-        <h1 className="app-title">MyApp</h1>
-        <div>
-          <Link to="/profile">
-            <button className="button">Profile</button>
-          </Link>
-            <button
-              className="button logout-button"
-              onClick={handleLogout} // Call handleLogout on button click
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Navbar />
+      <main className="container mx-auto px-4 pb-6 flex flex-col space-y-3 flex-grow">
+        <UpcomingRideBar />
+        <SearchFilters />
+
+        <div
+          className="flex flex-col md:flex-row gap-4 flex-grow
+                items-stretch   // Mobile: Align children to the left
+                md:items-start // Desktop: Vertically center children in the row
+                w-[90%] mx-auto"
+        >
+          <div className="flex-grow md:flex-grow-[3]">
+            <HomepageRideList />
+          </div>
+          <div className="flex flex-col flex-grow items-center justify-center py-6">
+            <Button
+              type="submit"
+              className="h-16 w-48 text-lg mx-auto bg-green-600 hover:bg-green-700 text-white py-3"
+              onClick={() => {
+                Navigate("/create-ride");
+              }}
             >
-              Logout
-            </button>
+              Create Ride
+            </Button>
+          </div>
         </div>
-      </nav>
-
-      {/* Home Page Content */}
-      <div className="home-content">
-        <h1 className="welcome-title">Welcome to the Home Page!</h1>
-        <p>Welcome {user ? user.displayName : "User"}.</p>
-      </div>
-
-      {/* Inline styles at the bottom */}
-      <style>
-        {`
-          .navbar {
-            padding: 16px;
-            background-color: #38B2AC;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-          }
-
-          .app-title {
-            font-size: 24px;
-          }
-
-          .button {
-            background-color: transparent;
-            color: white;
-            border: 1px solid #38B2AC;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-          }
-
-          .logout-button {
-            margin-left: 16px;
-          }
-
-          .home-content {
-            padding: 32px;
-          }
-
-          .welcome-title {
-            font-size: 36px;
-            margin-bottom: 16px;
-          }
-        `}
-      </style>
+      </main>{" "}
+      <BrandFooter />
     </div>
   );
 };

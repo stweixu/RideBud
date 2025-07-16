@@ -5,7 +5,7 @@ const { transporter } = require("../utility/email");
 const jwt = require("jsonwebtoken");
 
 const registerUserController = async (req, res) => {
-  const { displayName, email, password } = req.body;
+  const { displayName, email, password, dateOfBirth } = req.body;
 
   try {
     // Check if user already exists
@@ -27,6 +27,7 @@ const registerUserController = async (req, res) => {
         $set: {
           displayName,
           password: hashedPassword,
+          dateOfBirth,
           verifyToken: token,
           verifyExpiresAt: Date.now() + 10 * 60 * 1000,
         },

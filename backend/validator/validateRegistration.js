@@ -1,7 +1,14 @@
 // validators/registerValidator.js
 const { body } = require("express-validator");
+const { validate } = require("../models/User");
 
-const registerValidator = [
+const twelveYearsAgo = () => {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - 12);
+  return date;
+};
+
+const validateRegistration = [
   body("displayName")
     .notEmpty()
     .withMessage("Display name is required")
@@ -29,6 +36,19 @@ const registerValidator = [
       }
       return true;
     }),
+  body("dateOfBirth")
+    .notEmpty()
+    .withMessage("Date of birth is required")
+    .isISO8601() // Ensures it's a valid date string in ISO format (e.g., "YYYY-MM-DD")
+    .toDate() // Converts the string to a Date object
+    .withMessage("Invalid date of birth format")
+    .custom((value) => {
+      // 'value' here will be a Date object after .toDate()
+      if (value > twelveYearsAgo()) {
+        throw new Error("You must be at least 12 years old to register.");
+      }
+      return true;
+    }),
 ];
 
-module.exports = registerValidator;
+module.exports = validateRegistration;

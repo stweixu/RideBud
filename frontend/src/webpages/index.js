@@ -1,3 +1,9 @@
 export { default as LoginPage } from "./LoginPage";
 export { default as UserHomePage } from "./UserHomePage";
 export { default as RegistrationPage } from "./RegistrationPage";
+export { default as UserProfile } from "./PreviewPage";
+export { default as PreviewPage } from "./PreviewPage";
+export { default as CreateRidePage } from "./CreateRidePage";
+export { default as PageNotFound } from "./PageNotFound";
+export { default as ProfilePage } from "./ProfilePage";
+export { default as MyRidesPage } from "./MyRidesPage";
