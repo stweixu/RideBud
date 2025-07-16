@@ -1,7 +1,7 @@
-const express = require('express'); 
+const express = require("express");
 const router = express.Router();
-const { logOutController } = require('../controller/logoutController'); // Import the logOutController
+const { logOutController } = require("../../controller/logoutController"); // Import the logOutController
 
-router.post('/', logOutController); // Log out route
+router.post("/", logOutController); // Log out route
 
 module.exports = router; // Export the router
