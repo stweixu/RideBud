@@ -4,6 +4,7 @@ import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
 
 export default function RegistrationPage() {
+  const [notification, setNotification] = useState("");
   const [displayName, setdisplayName] = useState("");
   const [emailUsername, setEmailUsername] = useState("");
   const [emailDomain, setEmailDomain] = useState("gmail.com");
@@ -43,13 +44,15 @@ export default function RegistrationPage() {
         throw new Error(errorMsg);
       }
 
-      alert("Registration successful");
+      alert("A verification link has been sent to your email.");
+      setNotification("A verification link has been sent to your email.");
       setError("");
       setdisplayName("");
       setEmailUsername("");
       setEmailDomain("gmail.com");
       setPassword("");
       setConfirmPassword("");
+      setNotification("");
     } catch (err) {
       setError(err.message);
     }
@@ -148,6 +151,9 @@ export default function RegistrationPage() {
           </div>
         </div>
         {error && <p style={styles.error}>{error}</p>}
+        {notification && (
+          <p style={{ color: "green", textAlign: "center" }}>{notification}</p>
+        )}
         <div style={styles.submitWrapper}>
           <button type="submit" style={styles.submitButton}>
             Register

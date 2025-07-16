@@ -10,6 +10,7 @@ const loginRouter = require("./loginRouter");
 const logOutRouter = require("./logOutRouter");
 const authCheckRouter = require("./authCheckRouter");
 const meRouter = require("./meRouter");
+const verifyEmailRouter = require("./verifyEmailRouter");
 
 // Define the routeMap object to map paths to routers
 const routeMap = {
@@ -19,6 +20,7 @@ const routeMap = {
   "/logout": logOutRouter,
   "/auth-check": authCheckRouter,
   "/me": meRouter,
+  "/verify": verifyEmailRouter,
 };
 
 // Dynamically use routes from the routeMap object
