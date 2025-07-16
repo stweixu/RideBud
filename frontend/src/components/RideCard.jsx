@@ -59,17 +59,23 @@ const RideCard = ({
     <Card className="w-full bg-white shadow-md hover:shadow-lg transition-shadow">
       <CardContent className="p-3 md:p-4">
         <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1  w-[60%]">
             <MapPin className="h-6 w-6 text-green-600" />
-            <span className="font-medium text-xl">{route.origin}</span>
+            <span className="font-medium text-xl md:text-3xl ">
+              {route.origin}
+            </span>
             <span className="text-gray-500 text-xl">→</span>
-            <span className="font-medium text-xl">{route.destination}</span>
+            <span className="font-medium text-xl md:text-3xl">
+              {route.destination}
+            </span>
           </div>
+
+          <div className="w-[20%} flex-shrink-0"> {"  "}</div>
 
           <div className="ml-auto">
             <Badge
               variant="outline"
-              className="bg-green-50 text-green-700 border-green-200 text-xs md:text-lg flex flex-col justify-center items-center"
+              className="bg-green-50 text-green-700 border-green-200 text-xs md:text-lg text-center flex flex-col justify-center items-center"
             >
               <div>Estimated Price:</div>
               <div>${price.toFixed(2)}</div>
@@ -136,7 +142,7 @@ const RideCard = ({
           className="w-full bg-green-600 hover:bg-green-700 text-white text-xs md:text-sm h-9 md:h-11"
           onClick={onRequestRide}
         >
-          Request Ride
+          Join Ride
         </Button>
       </CardFooter>
     </Card>
