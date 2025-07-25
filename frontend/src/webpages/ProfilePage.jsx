@@ -395,12 +395,13 @@ export default function ProfilePage() {
                   )}
                 </div>
                 <div className="flex items-center space-x-2 md:space-x-4">
-                  <div className="flex items-center text-yellow-500 text-xs">
+                  {/* <div className="flex items-center text-yellow-500 text-xs">
                     <Star className="h-3 w-3 md:h-4 md:w-4 fill-yellow-500 mr-0.5 md:mr-1" />
                     <span className="font-semibold">
                       {profileData.rating.toFixed(1)}
                     </span>
                   </div>
+                   RATING FUNCTIONALITY */}
                   <Badge
                     variant="secondary"
                     className="bg-green-50 text-green-700 text-xs px-2 py-0.5 md:px-2.5 md:py-1"

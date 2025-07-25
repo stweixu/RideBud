@@ -1,23 +1,47 @@
-// src/contexts/AuthProvider.js
 import React, { useEffect, useState } from "react";
 import { AuthContext } from "./authContext"; // Import the context
 import { fetchUserData } from "../utils/api";
 
-// AuthProvider component
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true); // Wait until we check auth
   const [user, setUser] = useState(null); // Store user data
 
+  // New state for journeys reset by main rider
+  const [resetJourneys, setResetJourneys] = useState([]);
+
+  const fetchResetJourneys = async () => {
+    try {
+      const res = await fetch(
+        "http://localhost:5000/api/user-journeys/reset-by-main-rider",
+        {
+          credentials: "include",
+        }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setResetJourneys(data.affectedJourneys || []);
+      } else {
+        console.warn("Failed to fetch reset journeys");
+        setResetJourneys([]);
+      }
+    } catch (error) {
+      console.error("Error fetching reset journeys:", error);
+      setResetJourneys([]);
+    }
+  };
+
   const login = async () => {
-    setIsAuthenticated(true); // Login logic
+    setIsAuthenticated(true);
 
     try {
-      const userData = await fetchUserData(); // Fetch user data after login
-      setUser(userData); // Set user data to state
+      const userData = await fetchUserData();
+      setUser(userData);
+      await fetchResetJourneys(); // Fetch reset journeys immediately after login
     } catch (err) {
       console.error("Error fetching user data:", err);
-      setUser(null); // Handle error
+      setUser(null);
+      setResetJourneys([]);
     }
   };
 
@@ -27,33 +51,31 @@ export const AuthProvider = ({ children }) => {
       credentials: "include",
     });
     setIsAuthenticated(false);
-    setUser(null); // Clear user data
+    setUser(null);
+    setResetJourneys([]);
   };
 
   useEffect(() => {
-    // Simulate an API call to check authentication status
     const checkAuth = async () => {
       try {
         const res = await fetch("http://localhost:5000/api/auth-check", {
           method: "GET",
-          credentials: "include", // Include cookies in the request
+          credentials: "include",
         });
-
         const data = await res.json();
-        setIsAuthenticated(data.isAuthenticated); // Set authentication status
+        setIsAuthenticated(data.isAuthenticated);
         if (data.isAuthenticated) {
-          const userData = await fetchUserData(); // Fetch user data after auth-check
-          console.log("Fetched user data:", userData);
-          setUser(userData); // Set user data to state
+          const userData = await fetchUserData();
+          setUser(userData);
+          await fetchResetJourneys(); // Also fetch reset journeys after auth-check
         }
       } catch (err) {
         console.error("Auth check failed:", err);
-        setIsAuthenticated(false); // Handle error
+        setIsAuthenticated(false);
       } finally {
-        setLoading(false); // Set loading to false after checking auth
+        setLoading(false);
       }
     };
-
     checkAuth();
   }, []);
 
@@ -61,7 +83,15 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, login, logout, user, setUser }}
+      value={{
+        isAuthenticated,
+        login,
+        logout,
+        user,
+        setUser,
+        resetJourneys, // Expose reset journeys here
+        setResetJourneys,
+      }}
     >
       {children}
     </AuthContext.Provider>

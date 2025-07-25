@@ -3,7 +3,7 @@ import React from "react";
 import "./googleMap.css"; // Import the CSS file for styling
 
 const GMapComponent = () => {
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY; // Store the API key in a variable
+  const apiKey = import.meta.env.VITE_Maps_API_KEY; // Store the API key in a variable
 
   return (
     <APIProvider
