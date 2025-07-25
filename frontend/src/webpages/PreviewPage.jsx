@@ -1,318 +1,111 @@
-import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import React, { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/authContext";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  MapPin,
-  Clock,
-  Users,
-  Star,
-  Calendar,
-  Phone,
-  MessageCircle,
-} from "lucide-react";
-import Navbar from "@/components/navbar";
+import { Badge } from "@/components/ui/badge";
+import { Clock, MessageCircle } from "lucide-react";
+import Navbar from "@/components/Navbar";
 
-export default function ProfilePage({
-  onContactDriver = () => console.log("Contact driver"),
-  onCancelRide = () => console.log("Cancel ride"),
-}) {
-  const [currentRides] = useState([
-    {
-      id: "1",
-      driver: {
-        name: "Sarah Smith",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah",
-        rating: 4.9,
-        phone: "+1 (555) 234-5678",
-      },
-      route: {
-        origin: "Downtown Plaza",
-        destination: "Airport Terminal 1",
-      },
-      date: "2024-01-15",
-      time: "08:30",
-      status: "upcoming",
-      price: 15.5,
-      passengers: 2,
-      notes: "Please be ready 5 minutes early",
-    },
-    {
-      id: "2",
-      driver: {
-        name: "Mike Johnson",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=mike",
-        rating: 4.7,
-        phone: "+1 (555) 345-6789",
-      },
-      route: {
-        origin: "University Campus",
-        destination: "Tech Park",
-      },
-      date: "2024-01-18",
-      time: "17:00",
-      status: "upcoming",
-      price: 8.5,
-      passengers: 1,
-    },
-  ]);
+const ConversationList = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [conversations, setConversations] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const [pastRides] = useState([
-    {
-      id: "3",
-      driver: {
-        name: "Emily Chen",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=emily",
-        rating: 4.9,
-        phone: "+1 (555) 456-7890",
-      },
-      route: {
-        origin: "Riverside Apartments",
-        destination: "Shopping District",
-      },
-      date: "2024-01-10",
-      time: "11:30",
-      status: "completed",
-      price: 10.0,
-      passengers: 1,
-    },
-    {
-      id: "4",
-      driver: {
-        name: "David Wilson",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=david",
-        rating: 4.6,
-        phone: "+1 (555) 567-8901",
-      },
-      route: {
-        origin: "North Hills",
-        destination: "Downtown",
-      },
-      date: "2024-01-08",
-      time: "13:00",
-      status: "completed",
-      price: 14.0,
-      passengers: 2,
-    },
-    {
-      id: "5",
-      driver: {
-        name: "Lisa Brown",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=lisa",
-        rating: 4.8,
-        phone: "+1 (555) 678-9012",
-      },
-      route: {
-        origin: "Eastside Park",
-        destination: "Business District",
-      },
-      date: "2024-01-05",
-      time: "14:15",
-      status: "cancelled",
-      price: 16.5,
-      passengers: 1,
-    },
-  ]);
+  useEffect(() => {
+    if (!user) return;
 
-  const formatDate = (dateString) => {
+    const fetchConversations = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/chat/conversations", {
+          method: "GET",
+          credentials: "include",
+        });
+        const data = await res.json();
+        setConversations(data.conversations || []);
+      } catch (err) {
+        console.error("Failed to load conversations:", err);
+        setConversations([]);
+      }
+      setLoading(false);
+    };
+
+    fetchConversations();
+  }, [user]);
+
+  // Find the other participant in a conversation
+  const getOtherParticipant = (participants) => {
+    return participants.find((p) => p._id !== user._id) || {};
+  };
+
+  // Format date/time for last message
+  const formatTime = (dateString) => {
+    if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      weekday: "short",
-      year: "numeric",
+    return date.toLocaleString([], {
+      hour: "2-digit",
+      minute: "2-digit",
       month: "short",
       day: "numeric",
     });
   };
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case "upcoming":
-        return (
-          <Badge className="bg-blue-50 text-blue-700 border-blue-200">
-            Upcoming
-          </Badge>
-        );
-      case "completed":
-        return (
-          <Badge className="bg-green-50 text-green-700 border-green-200">
-            Completed
-          </Badge>
-        );
-      case "cancelled":
-        return (
-          <Badge className="bg-red-50 text-red-700 border-red-200">
-            Cancelled
-          </Badge>
-        );
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
+  const handleConversationClick = (conversationId) => {
+    // Navigate to chat page or open chat component
+    navigate(`/chat/${conversationId}`);
   };
 
-  const RideCard = ({ ride }) => (
-    <Card className="bg-white shadow-md hover:shadow-lg transition-shadow">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <Avatar>
-              <AvatarImage src={ride.driver.avatar} alt={ride.driver.name} />
-              <AvatarFallback>{ride.driver.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <div>
-              <h3 className="font-medium">{ride.driver.name}</h3>
-              <div className="flex items-center text-xs text-yellow-500">
-                <Star className="h-4 w-4 fill-yellow-500 mr-1" />
-                <span>{ride.driver.rating.toFixed(1)}</span>
-              </div>
-            </div>
-          </div>
-          {getStatusBadge(ride.status)}
-        </div>
+  if (loading) {
+    return (
+      <div className="p-4 text-center text-gray-500">
+        Loading conversations...
+      </div>
+    );
+  }
 
-        <div className="space-y-3 mb-4">
-          <div className="flex items-start gap-2">
-            <MapPin className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
-            <div>
-              <p className="text-xs font-medium">
-                From: <span className="font-normal">{ride.route.origin}</span>
-              </p>
-              <p className="text-xs font-medium">
-                To:{" "}
-                <span className="font-normal">{ride.route.destination}</span>
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-green-600" />
-              <p className="text-xs">{formatDate(ride.date)}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-green-600" />
-              <p className="text-xs">{ride.time}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-green-600" />
-              <p className="text-xs">
-                {ride.passengers}{" "}
-                {ride.passengers === 1 ? "passenger" : "passengers"}
-              </p>
-            </div>
-            <Badge
-              variant="outline"
-              className="bg-green-50 text-green-700 border-green-200"
-            >
-              ${ride.price.toFixed(2)}
-            </Badge>
-          </div>
-
-          {ride.notes && (
-            <div className="bg-gray-50 p-3 rounded-md">
-              <p className="text-xs text-gray-600">
-                <strong>Note:</strong> {ride.notes}
-              </p>
-            </div>
-          )}
-        </div>
-
-        {ride.status === "upcoming" && (
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1"
-              onClick={() => onContactDriver(ride.id)}
-            >
-              <Phone className="h-4 w-4 mr-2" />
-              Contact Driver
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1"
-              onClick={() => onContactDriver(ride.id)}
-            >
-              <MessageCircle className="h-4 w-4 mr-2" />
-              Message
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => onCancelRide(ride.id)}
-            >
-              Cancel
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
+  if (conversations.length === 0) {
+    return (
+      <div className="p-4 text-center text-gray-500">
+        No conversations found.
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="container mx-auto px-4 py-6">
-        <div className="max-w-2xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6 text-gray-800">My Rides</h1>
-
-          <Tabs defaultValue="current" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="current">
-                Current Rides ({currentRides.length})
-              </TabsTrigger>
-              <TabsTrigger value="past">
-                Past Rides ({pastRides.length})
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="current" className="space-y-4">
-              {currentRides.length > 0 ? (
-                currentRides.map((ride) => (
-                  <RideCard key={ride.id} ride={ride} />
-                ))
-              ) : (
-                <Card className="bg-white">
-                  <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="text-gray-400 mb-4">
-                      <Users className="h-16 w-16 mx-auto" />
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-700 mb-2">
-                      No upcoming rides
-                    </h3>
-                    <p className="text-gray-500">Book a ride to see it here</p>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-
-            <TabsContent value="past" className="space-y-4">
-              {pastRides.length > 0 ? (
-                pastRides.map((ride) => <RideCard key={ride.id} ride={ride} />)
-              ) : (
-                <Card className="bg-white">
-                  <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="text-gray-400 mb-4">
-                      <Clock className="h-16 w-16 mx-auto" />
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-700 mb-2">
-                      No ride history
-                    </h3>
-                    <p className="text-gray-500">
-                      Your completed rides will appear here
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
-      </main>
+    <div className="max-w-md mx-auto mt-4 space-y-3">
+      {conversations.map((conv) => {
+        const other = getOtherParticipant(conv.participants);
+        return (
+          <Card
+            key={conv._id}
+            className="cursor-pointer hover:bg-green-50"
+            onClick={() => handleConversationClick(conv._id)}
+          >
+            <CardContent className="flex items-center gap-4 p-4">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={other.avatar} alt={other.name} />
+                <AvatarFallback>{other.name?.charAt(0) || "?"}</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col flex-1">
+                <div className="flex justify-between items-center">
+                  <h4 className="font-medium">{other.name || "Unknown"}</h4>
+                  <span className="text-xs text-gray-400">
+                    {formatTime(conv.lastMessage?.createdAt)}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600 truncate max-w-xs">
+                  {conv.lastMessage?.content || "No messages yet"}
+                </p>
+              </div>
+              <MessageCircle className="h-5 w-5 text-green-600" />
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
-}
+};
+
+export default ConversationList;

@@ -1,61 +1,282 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Search, Calendar, MapPin, Filter, X, Clock } from "lucide-react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Calendar as CalendarComponent } from "./ui/calendar";
+import GoogleMapsAutocomplete from "./GoogleMapsAutocomplete";
+import { cn } from "@/lib/utils";
 
 const SearchFilters = ({ onSearch = () => {} }) => {
-  const [filters, setFilters] = useState({
-    searchQuery: "",
-    date: undefined,
-    pickUpLocation: "",
-    dropOffLocation: "",
-    timeOfDay: "",
-    activeFilters: [],
-  });
+  const SORT_OPTIONS = [
+    { key: "nearest", label: "Nearest" },
+    { key: "earliest", label: "Earliest" },
+    { key: "lowestPrice", label: "Lowest price" },
+    { key: "highestPrice", label: "Highest price" },
+  ];
 
-  const [formData, setFormData] = useState({
-    time: "", // Assuming 'time' is a string like "HH:MM"
-  });
-  const timeInputRef = useRef(null);
-
-  const handleSearchChange = (e) => {
-    setFilters({ ...filters, searchQuery: e.target.value });
+  const roundToNext10Min = (date) => {
+    const ms = 1000 * 60 * 10;
+    return new Date(Math.ceil(date.getTime() / ms) * ms);
   };
 
-  const handleDateChange = (date) => {
-    setFilters({ ...filters, date });
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const [filters, setFilters] = useState({
+    searchQuery: "",
+    date: today,
+    pickUpLocation: "",
+    pickUpLat: null,
+    pickUpLng: null,
+    dropOffLocation: "",
+    dropOffLat: null,
+    dropOffLng: null,
+    timeOfDay: (() => {
+      const now = new Date();
+      const rounded = roundToNext10Min(now);
+      return rounded.toTimeString().slice(0, 5);
+    })(),
+    sortBy: "nearest",
+  });
+
+  useEffect(() => {
+    if (!filters.date || !filters.timeOfDay) return;
+
+    const selectedDate = new Date(filters.date);
+    selectedDate.setHours(0, 0, 0, 0);
+    const nowDate = new Date();
+    nowDate.setHours(0, 0, 0, 0);
+
+    if (selectedDate.getTime() === nowDate.getTime()) {
+      const [selectedHour, selectedMinute] = filters.timeOfDay
+        .split(":")
+        .map(Number);
+      const now = new Date();
+      const nowHour = now.getHours();
+      const nowMinute = now.getMinutes();
+
+      if (
+        selectedHour < nowHour ||
+        (selectedHour === nowHour && selectedMinute < nowMinute)
+      ) {
+        const rounded = roundToNext10Min(now);
+        const roundedStr = rounded.toTimeString().slice(0, 5);
+        setFilters((prev) => ({ ...prev, timeOfDay: roundedStr }));
+      }
+    }
+  }, [filters.date, filters.timeOfDay]);
+
+  const hasFiredInitialSearch = useRef(false);
+
+  useEffect(() => {
+    if (
+      !hasFiredInitialSearch.current &&
+      filters.pickUpLat !== null &&
+      filters.pickUpLng !== null
+    ) {
+      onSearch(filters);
+      hasFiredInitialSearch.current = true;
+    }
+  }, [filters.pickUpLat, filters.pickUpLng]);
+
+  const getMinTime = () => {
+    const selectedDate = new Date(filters.date);
+    selectedDate.setHours(0, 0, 0, 0);
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
+
+    if (selectedDate.getTime() === todayDate.getTime()) {
+      const now = new Date();
+      const rounded = roundToNext10Min(now);
+      const h = String(rounded.getHours()).padStart(2, "0");
+      const m = String(rounded.getMinutes()).padStart(2, "0");
+      return `${h}:${m}`;
+    }
+    return "00:00";
+  };
+
+  useEffect(() => {
+    const setCurrentLocationAsPickup = async () => {
+      if (!navigator.geolocation) {
+        console.warn("Geolocation not supported");
+        return;
+      }
+
+      try {
+        const position = await new Promise((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0,
+          })
+        );
+
+        const { latitude, longitude } = position.coords;
+
+        const backendGeocodeUrl = `http://localhost:5000/api/directions/geocode?lat=${latitude}&lng=${longitude}`;
+        const response = await fetch(backendGeocodeUrl, {
+          method: "GET",
+          credentials: "include",
+        });
+        const data = await response.json();
+
+        if (response.ok && data.address) {
+          setFilters((prev) => ({
+            ...prev,
+            pickUpLocation: data.address,
+            pickUpLat: latitude,
+            pickUpLng: longitude,
+          }));
+        } else {
+          setFilters((prev) => ({
+            ...prev,
+            pickUpLat: latitude,
+            pickUpLng: longitude,
+          }));
+        }
+      } catch (err) {
+        console.warn("Could not get current location:", err);
+      }
+    };
+
+    setCurrentLocationAsPickup();
+  }, []);
+
+  const [isLocatingPickUp, setIsLocatingPickUp] = useState(false);
+  const [isLocatingDropOff, setIsLocatingDropOff] = useState(false);
+  const [apiError, setApiError] = useState(null);
+
+  const pickUpPlaceSelectedRef = useRef(false);
+  const dropOffPlaceSelectedRef = useRef(false);
+
+  const timeInputRef = useRef(null);
+
+  const handleInputChange = (field, value) => {
+    setFilters((prev) => ({ ...prev, [field]: value }));
+    setApiError(null);
+  };
+
+  const useCurrentLocation = async (field) => {
+    const setCurrentLocationLoading =
+      field === "pickUpLocation" ? setIsLocatingPickUp : setIsLocatingDropOff;
+
+    setCurrentLocationLoading(true);
+    setApiError(null);
+
+    try {
+      if (!navigator.geolocation) {
+        setApiError("Geolocation is not supported by your browser.");
+        setCurrentLocationLoading(false);
+        return;
+      }
+
+      const position = await new Promise((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0,
+        })
+      );
+
+      const { latitude, longitude } = position.coords;
+
+      const backendGeocodeUrl = `http://localhost:5000/api/directions/geocode?lat=${latitude}&lng=${longitude}`;
+      const response = await fetch(backendGeocodeUrl, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.address) {
+        handleInputChange(field, data.address);
+        if (field === "pickUpLocation") {
+          pickUpPlaceSelectedRef.current = true;
+          setFilters((prev) => ({
+            ...prev,
+            pickUpLat: latitude,
+            pickUpLng: longitude,
+          }));
+        } else if (field === "dropOffLocation")
+          dropOffPlaceSelectedRef.current = true;
+        setFilters((prev) => ({
+          ...prev,
+          dropOffLat: latitude,
+          dropOffLng: longitude,
+        }));
+      } else {
+        setApiError(data.message || "Could not determine current address.");
+      }
+    } catch (error) {
+      console.error(
+        "[useCurrentLocation] Error getting current location:",
+        error
+      );
+      setApiError(
+        "Failed to get current location. Please ensure location services are enabled."
+      );
+    } finally {
+      setCurrentLocationLoading(false);
+    }
+  };
+
+  const handleSortChange = (key) => {
+    setFilters((prev) => ({
+      ...prev,
+      sortBy: prev.sortBy === key ? "" : key,
+    }));
+  };
+
+  const handlePickUpPlaceSelected = (place) => {
+    const lat = place.geometry?.location?.lat();
+    const lng = place.geometry?.location?.lng();
+
+    setFilters((prev) => ({
+      ...prev,
+      pickUpLocation: place.name || place.formatted_address || "",
+      pickUpLat: lat || prev.pickUpLat,
+      pickUpLng: lng || prev.pickUpLng,
+    }));
+    pickUpPlaceSelectedRef.current = true;
+  };
+
+  const handleDropOffPlaceSelected = (place) => {
+    setFilters((prev) => ({
+      ...prev,
+      dropOffLocation: place.name || place.formatted_address || "",
+      dropOffLat: place.geometry?.location?.lat() || prev.dropOffLat,
+      dropOffLng: place.geometry?.location?.lng() || prev.dropOffLng,
+    }));
+    dropOffPlaceSelectedRef.current = true;
   };
 
   const handlePickUpLocationChange = (e) => {
-    setFilters({ ...filters, pickUpLocation: e.target.value });
+    const val = e.target.value;
+    pickUpPlaceSelectedRef.current = false;
+    setFilters((prev) => ({
+      ...prev,
+      pickUpLocation: val,
+      ...(val === "" ? { pickUpLat: null, pickUpLng: null } : {}),
+    }));
   };
 
   const handleDropOffLocationChange = (e) => {
-    setFilters({ ...filters, dropOffLocation: e.target.value });
+    const val = e.target.value;
+    dropOffPlaceSelectedRef.current = false;
+    setFilters((prev) => ({
+      ...prev,
+      dropOffLocation: val,
+      ...(val === "" ? { dropOffLat: null, dropOffLng: null } : {}),
+    }));
+  };
+
+  const handleDateChange = (date) => {
+    setFilters((prev) => ({ ...prev, date }));
   };
 
   const handleTimeChange = (e) => {
-    setFilters({ ...filters, timeOfDay: e.target.value });
-  };
-
-  const toggleFilter = (filter) => {
-    const currentFilters = [...filters.activeFilters];
-    const filterIndex = currentFilters.indexOf(filter);
-
-    if (filterIndex >= 0) {
-      currentFilters.splice(filterIndex, 1);
-    } else {
-      currentFilters.push(filter);
-    }
-
-    setFilters({ ...filters, activeFilters: currentFilters });
-  };
-
-  const removeFilter = (filter) => {
-    const currentFilters = filters.activeFilters.filter((f) => f !== filter);
-    setFilters({ ...filters, activeFilters: currentFilters });
+    setFilters((prev) => ({ ...prev, timeOfDay: e.target.value }));
   };
 
   const handleSearch = () => {
@@ -64,44 +285,88 @@ const SearchFilters = ({ onSearch = () => {} }) => {
 
   return (
     <div className="w-[90%] bg-white p-3 md:p-4 shadow-sm border-b border-gray-200 mx-auto mt-4 mb-2">
-      <div className=" max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <h2 className="text-xl md:text-2xl font-semibold text-gray-800 mb-3">
           Browse the Marketplace for RideBuds
         </h2>
-        {/* Search bar */}
+
+        {apiError && (
+          <p className="text-red-600 mb-2 text-center">{apiError}</p>
+        )}
+
         <div className="flex flex-col md:flex-row gap-3 md:gap-4 mb-1 md:mb-2">
-          <div className="relative flex-grow">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 size-3 md:size-4" />
-            <Input
-              placeholder="Search for pick up points..."
-              className="pl-9 pr-4 h-8 md:h-9 w-full"
-              value={filters.pickUpLocation}
-              onChange={handlePickUpLocationChange}
-            />
-          </div>
+          <GoogleMapsAutocomplete
+            id="pickup-autocomplete"
+            onPlaceSelected={handlePickUpPlaceSelected}
+            placeholder="Search for pick up points..."
+            value={filters.pickUpLocation}
+            onChange={handlePickUpLocationChange}
+            onUseCurrentLocation={() => useCurrentLocation("pickUpLocation")}
+            isLocating={isLocatingPickUp}
+            onBlur={() => {
+              if (!pickUpPlaceSelectedRef.current) {
+                setFilters((prev) => ({
+                  ...prev,
+                  pickUpLocation: "",
+                  pickUpLat: null,
+                  pickUpLng: null,
+                }));
+              }
+              pickUpPlaceSelectedRef.current = false;
+            }}
+          />
 
-          <div className="relative flex-grow">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 size-3 md:size-4" />
-            <Input
-              placeholder="Search for destinations..."
-              className="pl-9 pr-4 h-8 md:h-9 w-full"
-              value={filters.dropOffLocation}
-              onChange={handleDropOffLocationChange}
-            />
-          </div>
+          <GoogleMapsAutocomplete
+            id="dropoff-autocomplete"
+            onPlaceSelected={handleDropOffPlaceSelected}
+            placeholder="Search for destinations..."
+            value={filters.dropOffLocation}
+            onChange={handleDropOffLocationChange}
+            onUseCurrentLocation={() => useCurrentLocation("dropOffLocation")}
+            isLocating={isLocatingDropOff}
+            onBlur={() => {
+              if (!dropOffPlaceSelectedRef.current) {
+                setFilters((prev) => ({
+                  ...prev,
+                  dropOffLocation: "",
+                  dropOffLat: null,
+                  dropOffLng: null,
+                }));
+              }
+              dropOffPlaceSelectedRef.current = false;
+            }}
+          />
 
-          {/* Date picker */}
-          <Popover className="w-20">
+          {/* Date picker with Clear X and disable past dates */}
+          <Popover className="w-20 relative">
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                className="h-8 md:h-9 flex items-center justify-start gap-2 w-full  md:w-40 font-normal"
+                className="h-8 md:h-9 flex items-center justify-start gap-2 w-full md:w-40 font-normal relative"
               >
                 <Calendar className="size-3 md:size-4" />
                 {filters.date ? (
                   <span>{filters.date.toLocaleDateString()}</span>
                 ) : (
                   <span className="text-gray-500 text-sm">Select date</span>
+                )}
+
+                {filters.date && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setFilters((prev) => ({
+                        ...prev,
+                        date: null,
+                        timeOfDay: "",
+                      }));
+                    }}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-700"
+                    aria-label="Clear date"
+                  >
+                    <X size={16} />
+                  </button>
                 )}
               </Button>
             </PopoverTrigger>
@@ -111,42 +376,45 @@ const SearchFilters = ({ onSearch = () => {} }) => {
                 selected={filters.date}
                 onSelect={handleDateChange}
                 initialFocus
+                // Disable dates before today
+                disabled={(date) => {
+                  const d = new Date(date);
+                  d.setHours(0, 0, 0, 0);
+                  return d < today;
+                }}
               />
             </PopoverContent>
           </Popover>
 
-          {/* Time of day dropdown           */}
-
-          {/* Preferred Time */}
-          <div className="space-y-2">
+          {/* Time picker without X button */}
+          <div className="space-y-2 w-20 md:w-40">
             <Button
-              id="time-input-trigger" // ID for label association
-              variant="outline" // Assuming shadcn/ui Button variant
+              id="time-input-trigger"
+              variant="outline"
               className="w-full justify-start text-left font-normal h-8 md:h-9 relative"
-              onClick={() => timeInputRef.current?.showPicker()} // Programmatically open time picker
+              onClick={() => timeInputRef.current?.showPicker()}
             >
-              {/* Clock icon placed directly inside the Button */}
               <Clock className="h-4 w-4 text-gray-500" />
               {filters.timeOfDay ? (
                 <span>{filters.timeOfDay}</span>
               ) : (
                 <span className="text-gray-500 text-sm">Select time</span>
               )}
-              {/* Hidden native input that handles the actual time selection */}
+
               <Input
                 ref={timeInputRef}
-                id="time" // Keep original ID for form data binding
+                id="time"
                 type="time"
                 step="600"
                 value={filters.timeOfDay}
                 onChange={handleTimeChange}
+                min={getMinTime()}
                 className="absolute inset-0 opacity-0 cursor-pointer z-10"
                 required
               />
             </Button>
           </div>
 
-          {/* Search button */}
           <Button
             className="h-8 md:h-9 bg-green-600 hover:bg-green-700 text-white px-4 md:px-6 w-full md:w-auto"
             onClick={handleSearch}
@@ -155,101 +423,41 @@ const SearchFilters = ({ onSearch = () => {} }) => {
           </Button>
         </div>
 
-        {/* Filter options
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 mt-4">
           <div className="flex items-center gap-1 text-xs text-gray-600">
             <Filter size={16} />
-            <span>Filters:</span>
+            <span>Sort by:</span>
           </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            className={`text-xs ${
-              filters.activeFilters.includes("available")
-                ? "bg-green-50 border-green-200"
-                : ""
-            }`}
-            onClick={() => toggleFilter("available")}
-          >
-            Available seats
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            className={`text-xs ${
-              filters.activeFilters.includes("highRated")
-                ? "bg-green-50 border-green-200"
-                : ""
-            }`}
-            onClick={() => toggleFilter("highRated")}
-          >
-            Highly rated (4.5+)
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            className={`text-xs ${
-              filters.activeFilters.includes("lowPrice")
-                ? "bg-green-50 border-green-200"
-                : ""
-            }`}
-            onClick={() => toggleFilter("lowPrice")}
-          >
-            Low price
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            className={`text-xs ${
-              filters.activeFilters.includes("verified")
-                ? "bg-green-50 border-green-200"
-                : ""
-            }`}
-            onClick={() => toggleFilter("verified")}
-          >
-            Verified drivers
-          </Button>
-        </div>
-              */}
-
-        {/* Active filters                  
-        {filters.activeFilters.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-3">
-            {filters.activeFilters.map((filter) => (
-              <Badge
-                key={filter}
-                variant="secondary"
-                className="px-2 py-1 bg-green-50 text-green-800 hover:bg-green-100"
-              >
-                {filter === "available" && "Available seats"}
-                {filter === "highRated" && "Highly rated (4.5+)"}
-                {filter === "lowPrice" && "Low price"}
-                {filter === "verified" && "Verified drivers"}
-                <button
-                  className="ml-1 hover:text-red-500"
-                  onClick={() => removeFilter(filter)}
-                >
-                  <X size={14} />
-                </button>
-              </Badge>
-            ))}
-
-            {filters.activeFilters.length > 0 && (
+          {SORT_OPTIONS.map(({ key, label }) => {
+            const isSelected = filters.sortBy === key;
+            return (
               <Button
-                variant="link"
-                className="text-xs text-gray-500 p-0 h-auto"
-                onClick={() => setFilters({ ...filters, activeFilters: [] })}
+                key={key}
+                size="sm"
+                onClick={() => handleSortChange(key)}
+                className={cn(
+                  "text-xs px-3 py-1 rounded-md border transition-colors",
+                  isSelected
+                    ? "bg-green-50 border-gray-300 text-green-800 hover:bg-gray-200 hover:text-black"
+                    : "bg-white border-gray-300 text-black hover:bg-gray-100"
+                )}
               >
-                Clear all
+                {label}
               </Button>
-            )}
-            
-          </div>                
-        )}          */}
+            );
+          })}
+
+          {filters.sortBy && (
+            <Button
+              variant="link"
+              className="text-xs text-gray-800 p-0 h-auto ml-2"
+              onClick={() => setFilters((prev) => ({ ...prev, sortBy: "" }))}
+            >
+              Clear sort
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

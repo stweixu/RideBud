@@ -10,10 +10,13 @@ import {
   UserHomePage,
   LoginPage,
   PreviewPage,
-  CreateRidePage,
+  CreateJourneyPage,
   PageNotFound,
   ProfilePage,
-  MyRidesPage,
+  MyJourneysPage,
+  JourneyRecommendationsPage,
+  JourneyNavigatePage,
+  ConversationListPage,
 } from "./webpages"; // Import your pages
 import { useAuth } from "./contexts/authContext"; // Import the useAuth hook
 import ProtectedRoute from "./components/ProtectedRoute"; // Import ProtectedRoute
@@ -49,9 +52,9 @@ const App = () => {
           />
 
           <Route
-            path="/create-ride"
+            path="/create-journey"
             element={
-              <ProtectedRoute element={<CreateRidePage />} /> // Protect the route by checking server authentication
+              <ProtectedRoute element={<CreateJourneyPage />} /> // Protect the route by checking server authentication
             }
           />
 
@@ -63,9 +66,30 @@ const App = () => {
           />
 
           <Route
-            path="/my-rides"
+            path="/my-journeys"
             element={
-              <ProtectedRoute element={<MyRidesPage />} /> // Protect the route by checking server authentication
+              <ProtectedRoute element={<MyJourneysPage />} /> // Protect the route by checking server authentication
+            }
+          />
+
+          <Route
+            path="/journey-recommendations/"
+            element={
+              <ProtectedRoute element={<JourneyRecommendationsPage />} /> // Protect the route by checking server authentication
+            }
+          />
+
+          <Route
+            path="/journey-navigate/:userJourneyId"
+            element={
+              <ProtectedRoute element={<JourneyNavigatePage />} /> // Protect the route by checking server authentication
+            }
+          />
+
+          <Route
+            path="/conversations"
+            element={
+              <ProtectedRoute element={<ConversationListPage />} /> // Protect the route by checking server authentication
             }
           />
 

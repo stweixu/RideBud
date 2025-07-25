@@ -23,6 +23,17 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false); // <--- Add loading state
   const [apiError, setApiError] = useState(null); // <--- Add state for API errors
+  const [passwordFocused, setPasswordFocused] = useState(false);
+
+  const rules = {
+    minLength: formData.password.length >= 8,
+    hasUpper: /[A-Z]/.test(formData.password),
+    hasLower: /[a-z]/.test(formData.password),
+    hasNumber: /\d/.test(formData.password),
+    hasSymbol: /[~!@#$%^&]/.test(formData.password),
+  };
+
+  const allPass = Object.values(rules).every(Boolean);
 
   const handleInputChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
@@ -142,7 +153,7 @@ export default function LoginPage() {
                   <Lock className="h-4 w-4 text-green-600" />
                   Password
                 </Label>
-                <div className="relative">
+                <div className="relative group inline-block w-full">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
@@ -166,7 +177,56 @@ export default function LoginPage() {
                       <Eye className="h-4 w-4 text-gray-400" />
                     )}
                   </button>
+
+                  <div
+                    className="
+      absolute top-full right-0 mt-1 w-64 rounded-md bg-white border border-gray-300
+      p-3 text-xs text-gray-700 shadow-lg opacity-0 pointer-events-none
+      transition-opacity duration-200
+      group-hover:opacity-100 group-focus-within:opacity-100
+      z-10
+    "
+                  >
+                    <ul className="space-y-1">
+                      <li
+                        className={
+                          rules.minLength ? "text-green-600" : "text-gray-400"
+                        }
+                      >
+                        • At least 8 characters
+                      </li>
+                      <li
+                        className={
+                          rules.hasUpper ? "text-green-600" : "text-gray-400"
+                        }
+                      >
+                        • At least 1 uppercase letter
+                      </li>
+                      <li
+                        className={
+                          rules.hasLower ? "text-green-600" : "text-gray-400"
+                        }
+                      >
+                        • At least 1 lowercase letter
+                      </li>
+                      <li
+                        className={
+                          rules.hasNumber ? "text-green-600" : "text-gray-400"
+                        }
+                      >
+                        • At least 1 number
+                      </li>
+                      <li
+                        className={
+                          rules.hasSymbol ? "text-green-600" : "text-gray-400"
+                        }
+                      >
+                        • At least 1 special character (~!@#$%^&)
+                      </li>
+                    </ul>
+                  </div>
                 </div>
+
                 {errors.password && (
                   <p className="text-red-500 text-xs">{errors.password}</p>
                 )}

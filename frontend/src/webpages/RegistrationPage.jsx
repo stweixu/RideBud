@@ -4,14 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  User,
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  Calendar, // Keep Calendar icon for the date picker trigger
-} from "lucide-react";
+import { User, Mail, Lock, Eye, EyeOff, Calendar } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import LogoBar from "@/components/logoBar";
 import BrandFooter from "@/components/BrandFooter";
@@ -20,7 +13,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar"; // Your custom Calendar component
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import PasswordInputWithHints from "@/components/PasswordInputWithHints";
 
 export default function RegistrationPage() {
   const navigate = useNavigate();
@@ -30,7 +24,7 @@ export default function RegistrationPage() {
     email: "",
     password: "",
     confirmPassword: "",
-    dateOfBirth: undefined, // Correctly initialized to undefined for date picker
+    dateOfBirth: undefined,
     agreeToTerms: false,
   });
 
@@ -38,8 +32,18 @@ export default function RegistrationPage() {
   const [apiError, setApiError] = useState(null);
   const [notification, setNotification] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const passwordsMatch = formData.password === formData.confirmPassword;
+
+  // Password strength rules (for validation)
+  const isStrong = {
+    minLength: formData.password.length >= 8,
+    hasUpper: /[A-Z]/.test(formData.password),
+    hasLower: /[a-z]/.test(formData.password),
+    hasNumber: /\d/.test(formData.password),
+    hasSymbol: /[~!@#$%^&*()_+\-=[\]{}|\\:;"'<>,.?/]/.test(formData.password),
+  };
+  const passwordValid = Object.values(isStrong).every(Boolean);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -51,15 +55,10 @@ export default function RegistrationPage() {
     if (validationErrors[name]) {
       setValidationErrors({ ...validationErrors, [name]: "" });
     }
-    if (apiError) {
-      setApiError(null);
-    }
-    if (notification) {
-      setNotification(null);
-    }
+    if (apiError) setApiError(null);
+    if (notification) setNotification(null);
   };
 
-  // Dedicated handler for dateOfBirth from CalendarComponent
   const handleDateOfBirthChange = (date) => {
     setFormData({ ...formData, dateOfBirth: date });
     if (validationErrors.dateOfBirth) {
@@ -81,24 +80,23 @@ export default function RegistrationPage() {
 
     if (!formData.password) {
       newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+    } else if (!passwordValid) {
+      newErrors.password =
+        "Password must be at least 8 characters, and include uppercase, lowercase, number, and symbol.";
     }
+
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
     }
 
-    // --- Date of Birth validation ---
     if (!formData.dateOfBirth) {
       newErrors.dateOfBirth = "Date of birth is required";
     } else if (
       formData.dateOfBirth instanceof Date &&
       isNaN(formData.dateOfBirth.getTime())
     ) {
-      // Check if it's an invalid Date object
       newErrors.dateOfBirth = "Invalid Date of birth";
     }
-    // --- End Date of Birth validation ---
 
     if (!formData.agreeToTerms) {
       newErrors.agreeToTerms = "You must agree to the terms and conditions";
@@ -115,7 +113,6 @@ export default function RegistrationPage() {
 
     if (validateForm()) {
       setLoading(true);
-
       try {
         const res = await fetch("http://localhost:5000/api/register", {
           method: "POST",
@@ -139,7 +136,6 @@ export default function RegistrationPage() {
 
         setNotification("A verification link has been sent to your email.");
         setApiError(null);
-
         setFormData({
           displayName: "",
           email: "",
@@ -157,10 +153,6 @@ export default function RegistrationPage() {
         setLoading(false);
       }
     }
-  };
-
-  const handleLoginClick = () => {
-    navigate("/login");
   };
 
   return (
@@ -233,7 +225,7 @@ export default function RegistrationPage() {
                 )}
               </div>
 
-              {/* Password */}
+              {/* Password with hints */}
               <div className="space-y-2">
                 <Label
                   htmlFor="password"
@@ -242,36 +234,14 @@ export default function RegistrationPage() {
                   <Lock className="h-4 w-4 text-green-600" />
                   Password
                 </Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    className={`h-10 pr-10 ${
-                      validationErrors.password ? "border-red-500" : ""
-                    }`}
-                  />
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-0 px-3 flex items-center"
-                    onClick={() => setShowPassword(!showPassword)}
-                    tabIndex={-1}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-gray-400" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-gray-400" />
-                    )}
-                  </button>
-                </div>
-                {validationErrors.password && (
-                  <p className="text-red-500 text-xs">
-                    {validationErrors.password}
-                  </p>
-                )}
+                <PasswordInputWithHints
+                  password={formData.password}
+                  setPassword={(val) =>
+                    setFormData((prev) => ({ ...prev, password: val }))
+                  }
+                  confirmPassword={formData.confirmPassword}
+                  showHints={true}
+                />
               </div>
 
               {/* Confirm Password */}
@@ -288,11 +258,13 @@ export default function RegistrationPage() {
                     id="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
                     name="confirmPassword"
-                    placeholder="••••••••"
+                    placeholder="Re-enter your password"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     className={`h-10 pr-10 ${
-                      validationErrors.confirmPassword ? "border-red-500" : ""
+                      validationErrors.confirmPassword || !passwordsMatch
+                        ? "border-red-500 focus-visible:ring-1 focus-visible:ring-red-500 focus-visible:outline-none"
+                        : ""
                     }`}
                   />
                   <button
@@ -308,9 +280,10 @@ export default function RegistrationPage() {
                     )}
                   </button>
                 </div>
-                {validationErrors.confirmPassword && (
+                {(validationErrors.confirmPassword || !passwordsMatch) && (
                   <p className="text-red-500 text-xs">
-                    {validationErrors.confirmPassword}
+                    {validationErrors.confirmPassword ||
+                      "Passwords do not match"}
                   </p>
                 )}
               </div>
@@ -348,11 +321,11 @@ export default function RegistrationPage() {
                     <CalendarComponent
                       mode="single"
                       selected={formData.dateOfBirth}
-                      onSelect={handleDateOfBirthChange} // Use the dedicated handler
+                      onSelect={handleDateOfBirthChange}
                       initialFocus
                       captionLayout="dropdown"
                       fromYear={1900}
-                      toYear={new Date().getFullYear() - 10} // Set to current year minus 10
+                      toYear={new Date().getFullYear() - 17}
                     />
                   </PopoverContent>
                 </Popover>
@@ -363,20 +336,20 @@ export default function RegistrationPage() {
                 )}
               </div>
 
+              {/* Terms and Conditions */}
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="terms"
                   name="agreeToTerms"
                   checked={formData.agreeToTerms}
                   onCheckedChange={(checked) => {
-                    // Corrected handler for Shadcn Checkbox
-                    setFormData((prevData) => ({
-                      ...prevData,
+                    setFormData((prev) => ({
+                      ...prev,
                       agreeToTerms: checked,
                     }));
                     if (validationErrors.agreeToTerms) {
-                      setValidationErrors((prevErrors) => ({
-                        ...prevErrors,
+                      setValidationErrors((prev) => ({
+                        ...prev,
                         agreeToTerms: "",
                       }));
                     }
@@ -402,6 +375,7 @@ export default function RegistrationPage() {
                 </p>
               )}
 
+              {/* API error & notification */}
               {apiError && (
                 <p className="text-red-500 text-xs text-center">{apiError}</p>
               )}
@@ -425,7 +399,7 @@ export default function RegistrationPage() {
                 Already have an account?{" "}
                 <Link
                   to="/login"
-                  className="text-green-600 hover:underline font-medium "
+                  className="text-green-600 hover:underline font-medium"
                 >
                   Sign in
                 </Link>
