@@ -20,11 +20,9 @@ const changeEmailController = async (req, res) => {
       existingUserWithNewEmail &&
       existingUserWithNewEmail._id.toString() !== userId
     ) {
-      return res
-        .status(400)
-        .json({
-          msg: "This email address is already registered by another user.",
-        });
+      return res.status(400).json({
+        msg: "This email address is already registered by another user.",
+      });
     }
 
     // 3. Check if the new email is the same as the current email
@@ -50,7 +48,7 @@ const changeEmailController = async (req, res) => {
         $set: {
           newEmail: newEmail,
           token: token,
-          expiresAt: Date.now() + 30 * 60 * 1000, // 30 minutes from now
+          expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes from now
         },
       },
       { upsert: true } // Create if not found, update if found
