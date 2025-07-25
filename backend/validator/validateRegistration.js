@@ -2,9 +2,9 @@
 const { body } = require("express-validator");
 const { validate } = require("../models/User");
 
-const twelveYearsAgo = () => {
+const eighteenYearsAgo = () => {
   const date = new Date();
-  date.setFullYear(date.getFullYear() - 12);
+  date.setFullYear(date.getFullYear() - 17);
   return date;
 };
 
@@ -24,8 +24,31 @@ const validateRegistration = [
   body("password")
     .notEmpty()
     .withMessage("Password is required")
-    .isLength({ min: 6 })
-    .withMessage("Password must be at least 6 characters"),
+    .custom((password) => {
+      const allowedSymbols = "~!@#$%^&";
+      const symbolRegex = new RegExp(
+        `[${allowedSymbols.replace(/[-[\]/{}()*+?.\\^$|]/g, "\\$&")}]`
+      );
+
+      if (password.length < 8) {
+        throw new Error("Password must be at least 8 characters");
+      }
+      if (!/[A-Z]/.test(password)) {
+        throw new Error("Password must include at least one uppercase letter");
+      }
+      if (!/[a-z]/.test(password)) {
+        throw new Error("Password must include at least one lowercase letter");
+      }
+      if (!/\d/.test(password)) {
+        throw new Error("Password must include at least one number");
+      }
+      if (!symbolRegex.test(password)) {
+        throw new Error(
+          `Password must include at least one special symbol: ${allowedSymbols}`
+        );
+      }
+      return true;
+    }),
 
   body("confirmPassword")
     .notEmpty()
@@ -44,8 +67,8 @@ const validateRegistration = [
     .withMessage("Invalid date of birth format")
     .custom((value) => {
       // 'value' here will be a Date object after .toDate()
-      if (value > twelveYearsAgo()) {
-        throw new Error("You must be at least 12 years old to register.");
+      if (value > eighteenYearsAgo()) {
+        throw new Error("You must be at least 18 years old to register.");
       }
       return true;
     }),

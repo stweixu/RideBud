@@ -15,6 +15,12 @@ const updateProfileRouter = require("./user-profile/updateProfileRouter");
 const changePasswordRouter = require("./user-profile/changePasswordRouter");
 const changeEmailRouter = require("./user-profile/changeEmailRouter");
 const verifyEmailChangeRouter = require("./user-profile/verifyChangedEmail");
+const directionRouter = require("./directions/directionRouter");
+const userJourneyRouter = require("./user-journey/userJourneyRouter");
+const carpoolRideRouter = require("./user-journey/carpoolRideRouter");
+const recommendedJourneyRouter = require("./user-journey/recommendedJourneyRouter");
+const marketplaceRideRouter = require("./marketplace-ride/marketplaceRideRouter");
+const chatRouter = require("./chatRouter"); // Import chat routes
 
 // Define the routeMap object to map paths to routers
 const routeMap = {
@@ -29,6 +35,12 @@ const routeMap = {
   "/change-password": changePasswordRouter,
   "/change-email": changeEmailRouter,
   "/verify-email-change": verifyEmailChangeRouter,
+  "/directions": directionRouter,
+  "/user-journeys": userJourneyRouter,
+  "/carpool-rides": carpoolRideRouter,
+  "/recommended-journeys": recommendedJourneyRouter,
+  "/marketplace": marketplaceRideRouter,
+  "/chat": chatRouter, // Add chat routes here
 };
 
 // Dynamically use routes from the routeMap object
