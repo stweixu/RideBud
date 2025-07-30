@@ -50,7 +50,7 @@ export default function JourneyRecommendationsPage() {
       try {
         // 1. Fetch UserJourney details
         const userJourneyResponse = await fetch(
-          `http://localhost:5000/api/user-journeys/${userJourneyId}`,
+          `${import.meta.env.VITE_API_BASE_URL}/user-journeys/${userJourneyId}`,
           { method: "GET", credentials: "include" }
         );
         const userJourneyData = await userJourneyResponse.json();
@@ -65,7 +65,9 @@ export default function JourneyRecommendationsPage() {
 
         // 2. Fetch recommendations dynamically
         const recommendationsResponse = await fetch(
-          `http://localhost:5000/api/recommended-journeys/${userJourneyId}`,
+          `${
+            import.meta.env.VITE_API_BASE_URL
+          }/recommended-journeys/${userJourneyId}`,
           { method: "GET", credentials: "include" }
         );
         const recommendationsData = await recommendationsResponse.json();
@@ -227,6 +229,7 @@ export default function JourneyRecommendationsPage() {
             startTime={userJourney.preferredDateTime}
             recommendedJourneys={recommendedJourneys}
             userJourneyId={userJourneyId}
+            passengersCount={userJourney.passengersCount}
           />
         </div>
       </main>

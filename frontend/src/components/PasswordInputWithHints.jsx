@@ -37,7 +37,7 @@ const PasswordInputWithHints = ({
           setPassword(e.target.value);
         }}
         onBlur={() => setTouched(true)}
-        className={`h-10 focus:border-red-500
+        className={`h-10
           ${
             (!allPass && touched) || (!passwordsMatch && touched)
               ? "border-red-500 focus-visible:ring-1 focus-visible:ring-red-500 focus-visible:outline-none"

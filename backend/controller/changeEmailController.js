@@ -55,7 +55,7 @@ const changeEmailController = async (req, res) => {
     );
 
     // 6. Construct the verification link for the new dedicated endpoint
-    const verifyLink = `http://localhost:5000/api/verify-email-change?token=${token}`;
+    const verifyLink = `${process.env.API_BASE_URL}/verify-email-change?token=${token}`;
 
     // 7. Send verification email to the NEW email address
     await transporter.sendMail({

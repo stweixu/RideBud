@@ -114,17 +114,20 @@ export default function RegistrationPage() {
     if (validateForm()) {
       setLoading(true);
       try {
-        const res = await fetch("http://localhost:5000/api/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            displayName: formData.displayName,
-            email: formData.email,
-            password: formData.password,
-            confirmPassword: formData.confirmPassword,
-            dateOfBirth: formData.dateOfBirth,
-          }),
-        });
+        const res = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/register`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              displayName: formData.displayName,
+              email: formData.email,
+              password: formData.password,
+              confirmPassword: formData.confirmPassword,
+              dateOfBirth: formData.dateOfBirth,
+            }),
+          }
+        );
 
         const data = await res.json();
 

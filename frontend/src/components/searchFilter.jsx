@@ -114,7 +114,9 @@ const SearchFilters = ({ onSearch = () => {} }) => {
 
         const { latitude, longitude } = position.coords;
 
-        const backendGeocodeUrl = `http://localhost:5000/api/directions/geocode?lat=${latitude}&lng=${longitude}`;
+        const backendGeocodeUrl = `${
+          import.meta.env.VITE_API_BASE_URL
+        }/directions/geocode?lat=${latitude}&lng=${longitude}`;
         const response = await fetch(backendGeocodeUrl, {
           method: "GET",
           credentials: "include",
@@ -181,7 +183,9 @@ const SearchFilters = ({ onSearch = () => {} }) => {
 
       const { latitude, longitude } = position.coords;
 
-      const backendGeocodeUrl = `http://localhost:5000/api/directions/geocode?lat=${latitude}&lng=${longitude}`;
+      const backendGeocodeUrl = `${
+        import.meta.env.VITE_API_BASE_URL
+      }/directions/geocode?lat=${latitude}&lng=${longitude}`;
       const response = await fetch(backendGeocodeUrl, {
         method: "GET",
         credentials: "include",
@@ -338,7 +342,7 @@ const SearchFilters = ({ onSearch = () => {} }) => {
           />
 
           {/* Date picker with Clear X and disable past dates */}
-          <Popover className="w-20 relative">
+          <Popover className="md:w-20 relative">
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
@@ -387,7 +391,7 @@ const SearchFilters = ({ onSearch = () => {} }) => {
           </Popover>
 
           {/* Time picker without X button */}
-          <div className="space-y-2 w-20 md:w-40">
+          <div className="space-y-2 w-full md:w-24">
             <Button
               id="time-input-trigger"
               variant="outline"

@@ -1,9 +1,7 @@
 // validators/changePasswordValidator.js
 const { body } = require("express-validator");
 
-const validatePasswordChange = [
-  body("oldPassword").notEmpty().withMessage("Current password is required"),
-
+const validatePasswordReset = [
   body("newPassword")
     .notEmpty()
     .withMessage("Password is required")
@@ -34,4 +32,4 @@ const validatePasswordChange = [
     }),
 ];
 
-module.exports = validatePasswordChange;
+module.exports = validatePasswordReset;

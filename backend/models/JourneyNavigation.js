@@ -52,6 +52,7 @@ const journeyNavigationSchema = new mongoose.Schema(
     totalTime: { type: String, required: true },
     totalCostPerPax: { type: String, required: true },
     eta: { type: String, required: true },
+    journeyDepartureTime: { type: Date, required: true },
     totalDistance: String,
     steps: [journeyStepSchema],
     carpoolRideCost: { type: String, required: true },

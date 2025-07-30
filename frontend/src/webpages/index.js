@@ -10,3 +10,5 @@ export { default as MyJourneysPage } from "./MyJourneysPage";
 export { default as JourneyRecommendationsPage } from "./JourneyRecommendationsPage";
 export { default as JourneyNavigatePage } from "./JourneyNavigationPage";
 export { default as ConversationListPage } from "./ConversationListPage";
+export { default as ForgotPasswordPage } from "./ForgotPasswordPage";
+export { default as ResetPasswordPage } from "./ResetPasswordPage";

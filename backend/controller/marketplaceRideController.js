@@ -6,7 +6,7 @@ const { enrichCarpoolRideWithBuddyInfo } = require("./carpoolRideController");
 
 const joinMarketplaceRideController = async (req, res) => {
   const userId = req.user.userId;
-  const { matchedRideId } = req.body;
+  const { matchedRideId, passengersCount } = req.body;
 
   try {
     // Find the carpool ride by ID
@@ -39,15 +39,15 @@ const joinMarketplaceRideController = async (req, res) => {
     // Add the user to the carpool ride's riders if not already present
     if (!carpoolRide.riderIds.includes(userId)) {
       carpoolRide.riderIds.push(userId);
-      carpoolRide.passengersCount += 1;
+      carpoolRide.passengersCount += passengersCount;
     }
     carpoolRide.status = "matched";
     await carpoolRide.save();
 
     if (mainUserJourneyNavigation && carpoolRide.passengersCount > 0) {
       const perPassengerCost =
-        carpoolRide.totalCost / carpoolRide.passengersCount;
-      mainUserJourneyNavigation.cost = perPassengerCost;
+        carpoolRide.estimatedPrice / carpoolRide.passengersCount;
+      mainUserJourneyNavigation.totalCostPerPax = perPassengerCost.toFixed(2);
       await mainUserJourneyNavigation.save();
     }
 
@@ -67,7 +67,7 @@ const joinMarketplaceRideController = async (req, res) => {
     delete userJourneyObj.updatedAt;
     userJourneyObj.journeyNavigation = journeyNavigationData._id; // link to new navigation
     userJourneyObj.userId = userId;
-    userJourneyObj.passengersCount = 1;
+    userJourneyObj.passengersCount = passengersCount;
     userJourneyObj.status = "matched";
 
     const userJourneyData = new UserJourney(userJourneyObj);

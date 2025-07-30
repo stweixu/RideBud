@@ -138,6 +138,7 @@ const enrichUserJourneyWithRideInfo = async (journey) => {
     status: journey.status,
     matchedRideId: journey.matchedRideId?.toString() || null,
     carpoolRide,
+    totalCostPerPax: journey.journeyNavigation?.totalCostPerPax || 0,
     createdAt: journey.createdAt,
     updatedAt: journey.updatedAt,
   };
@@ -197,7 +198,9 @@ const getUpcomingJourney = async (req, res) => {
       userId,
       preferredDateTime: { $gt: now },
       status: "matched",
-    }).sort({ preferredDateTime: 1 });
+    })
+      .sort({ preferredDateTime: 1 })
+      .populate("journeyNavigation");
 
     if (!upcomingJourney) {
       return res.status(200).json({
@@ -348,6 +351,8 @@ const leaveMatchedRide = async (req, res) => {
           });
 
           if (remainingJourney) {
+            await updateJourneyStatusBasedOnRide(remainingJourney);
+
             const nav = await JourneyNavigation.findOne({
               userJourneyId: remainingJourney._id,
             });

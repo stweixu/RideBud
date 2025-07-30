@@ -3,7 +3,6 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 
 const changePasswordController = async (req, res) => {
-  console.log("Controller hit with body:", req.body);
   const { oldPassword, newPassword } = req.body;
   const userId = req.user.userId; // Assuming user ID is available in req.user
 

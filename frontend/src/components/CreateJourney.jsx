@@ -194,7 +194,9 @@ const CreateJourney = ({
       );
       const { latitude, longitude } = position.coords;
 
-      const backendGeocodeUrl = `http://localhost:5000/api/directions/geocode?lat=${latitude}&lng=${longitude}`;
+      const backendGeocodeUrl = `${
+        import.meta.env.VITE_API_BASE_URL
+      }/directions/geocode?lat=${latitude}&lng=${longitude}`;
       const response = await fetch(backendGeocodeUrl, {
         method: "GET",
         credentials: "include",
@@ -279,14 +281,17 @@ const CreateJourney = ({
       console.log("Final payload:", payload);
       console.log("==================================");
 
-      const res = await fetch("http://localhost:5000/api/user-journeys", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/user-journeys`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        }
+      );
 
       const data = await res.json();
 
@@ -526,7 +531,7 @@ const CreateJourney = ({
                         1 passenger
                       </SelectItem>
                       <SelectItem value="2" className="text-sm">
-                        2 passengers
+                        2 passengers (max)
                       </SelectItem>
                     </SelectContent>
                   </Select>

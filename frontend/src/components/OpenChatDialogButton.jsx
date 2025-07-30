@@ -36,15 +36,18 @@ const OpenChatDialogButton = ({
     setCurrentRideDetails(rideDetails);
 
     try {
-      const res = await fetch("http://localhost:5000/api/chat/conversation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          carpoolRideId: carpoolRideId,
-          ridebudUserId: rideBuddy.id, // Use rideBuddy.id as the recipient
-        }),
-        credentials: "include",
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/chat/conversation`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            carpoolRideId: carpoolRideId,
+            ridebudUserId: rideBuddy.id, // Use rideBuddy.id as the recipient
+          }),
+          credentials: "include",
+        }
+      );
       const data = await res.json();
 
       if (res.ok && data.conversation) {

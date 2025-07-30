@@ -18,15 +18,44 @@ cron.schedule("*/10 * * * *", async () => {
       const journeyId = journey._id;
 
       // 2. Delete associated carpool rides
-      await CarpoolRide.deleteMany({ _id: journey.matchedRideId });
+      await CarpoolRide.deleteOne({ _id: journey.matchedRideId });
 
       // 3. Delete associated navigation entries
-      await JourneyNavigation.deleteMany({ _id: journey.journeyNavigation });
+      await JourneyNavigation.deleteOne({ _id: journey.journeyNavigation });
 
       // 4. Delete the expired journey itself
       await UserJourney.deleteOne({ _id: journeyId });
 
       console.log(`🧹 Deleted expired journey: ${journeyId}`);
+    }
+  } catch (err) {
+    console.error("❌ Error during cleanup:", err);
+  }
+
+  try {
+    const passedMatchedJourneys = await UserJourney.find({
+      journeyTime: { $lt: now },
+      status: "matched",
+    });
+
+    for (const journey of passedMatchedJourneys) {
+      const journeyId = journey._id;
+
+      // 2. Delete associated carpool rides
+      await CarpoolRide.updateOne(
+        { _id: journey.matchedRideId },
+        { $set: { status: "completed" } }
+      );
+
+      // 4. Delete the expired journey itself
+      await UserJourney.updateOne(
+        { _id: journeyId },
+        {
+          $set: { status: "completed" },
+        }
+      );
+
+      console.log(`🧹 Updated matched journey: ${journeyId}`);
     }
   } catch (err) {
     console.error("❌ Error during cleanup:", err);
