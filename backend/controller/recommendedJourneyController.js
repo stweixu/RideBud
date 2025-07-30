@@ -43,28 +43,37 @@ const calculateETA = (startTime, addMinutes) => {
   try {
     let date;
     if (typeof startTime === "string") {
-      // Assuming startTime string is in "HH:MM am/pm" or "HH:MM" format for the current day
-      // This needs to be robust. Using a dummy date for time calculations.
-      const now = new Date();
-      const [timePart, ampmPart] = startTime.split(" ");
-      let [hours, minutes] = timePart.split(":").map(Number);
-
-      if (ampmPart && ampmPart.toLowerCase() === "pm" && hours < 12) {
-        hours += 12;
-      } else if (ampmPart && ampmPart.toLowerCase() === "am" && hours === 12) {
-        hours = 0; // 12 AM (midnight)
-      }
-      date = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-        hours,
-        minutes,
-        0,
-        0
-      );
-    } else if (startTime instanceof Date) {
+      // This path is primarily for parsing "HH:MM am/pm"
+      // For ISO strings, new Date(string) is preferred.
+      // If startTime is an ISO string, new Date(startTime) handles it
       date = new Date(startTime);
+      if (isNaN(date.getTime())) {
+        // If new Date(string) failed, try old HH:MM parsing
+        const now = new Date();
+        const [timePart, ampmPart] = startTime.split(" ");
+        let [hours, minutes] = timePart.split(":").map(Number);
+
+        if (ampmPart && ampmPart.toLowerCase() === "pm" && hours < 12) {
+          hours += 12;
+        } else if (
+          ampmPart &&
+          ampmPart.toLowerCase() === "am" &&
+          hours === 12
+        ) {
+          hours = 0; // 12 AM (midnight)
+        }
+        date = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          hours,
+          minutes,
+          0,
+          0
+        );
+      }
+    } else if (startTime instanceof Date) {
+      date = new Date(startTime); // If it's already a Date object, use it directly
     } else {
       return "N/A";
     }
@@ -205,7 +214,7 @@ const getLatLngFromLocation = (location) => {
  * @param {boolean} isLastSegment - True if this is the final segment of the overall journey.
  * @param {string} overallJourneyDestination - The final destination of the user's entire journey (used for the very last step).
  * @param {object} balancedRide - The balanced ride object (needed for carpool cost).
- * @param {Date} journeyPreferredDateTime - The user's preferred date and time for rate calculation.
+ * @param {Date} journeyPreferredDateTime - The user's preferred date and time for rate calculation (cost based).
  * @returns {Array} An array of processed step objects.
  */
 const processSteps = (
@@ -523,16 +532,18 @@ const getRecommendationsForUserJourney = async (req, res) => {
           userJourneyId: userJourney._id,
           type: "fastest-carpool",
           name: "Fastest (Carpool)",
+          departureTime: preferredDateTime,
           totalTime: leg.duration.text,
           totalCostPerPax: `$${splitFastestCost.toFixed(2)}`, // renamed from costPerPax
           passengersCount: passengerCountFastest,
           carpoolRideCost: `$${fastestCarpoolCost.toFixed(2)}`, // ADDED: Total carpool cost
-          carpoolStartTime: preferredDateTime, // ADDED: Start time for carpool
+          carpoolStartTime: preferredDateTime, // Still based on user's preferredDateTime
           eta: calculateETA(preferredDateTime, totalDurationMins),
           totalDistance: leg.distance.text,
           steps: [carpoolStep],
         };
       } else {
+        // Log the actual status for debugging API key issues
         console.warn("Fastest (Carpool) route not found:", drivingData.status);
       }
     }
@@ -545,37 +556,102 @@ const getRecommendationsForUserJourney = async (req, res) => {
       const origin = userJourney.journeyOrigin;
       const destination = userJourney.journeyDestination; // This is the overall final destination
 
-      const departureUnixTime = Math.floor(preferredDateTime.getTime() / 1000);
+      // NEW LOGIC START: Anchor timing to balancedRide.carpoolStartTime
+      let actualCarpoolStartTimeDate;
+      try {
+        // --- FIX for TypeError: balancedRide.carpoolStartTime.split is not a function ---
+        // balancedRide.carpoolStartTime is an ISO string from MongoDB
+        if (typeof balancedRide.carpoolStartTime === "string") {
+          actualCarpoolStartTimeDate = new Date(balancedRide.carpoolStartTime);
+        } else if (balancedRide.carpoolStartTime instanceof Date) {
+          actualCarpoolStartTimeDate = balancedRide.carpoolStartTime; // Already a Date
+        } else {
+          // Fallback for unexpected types
+          throw new Error(
+            `Unsupported type for balancedRide.carpoolStartTime: ${typeof balancedRide.carpoolStartTime}`
+          );
+        }
 
-      // Segment 1: Origin to Carpool Pickup Location (via Transit)
+        if (isNaN(actualCarpoolStartTimeDate.getTime())) {
+          throw new Error(
+            "Parsed balancedRide.carpoolStartTime resulted in an invalid Date."
+          );
+        }
+      } catch (e) {
+        console.error("Error parsing balancedRide.carpoolStartTime:", e);
+        // Fallback to preferredDateTime if carpoolStartTime is invalid or parsing fails
+        actualCarpoolStartTimeDate = preferredDateTime;
+      }
+
+      // First, get duration for origin to pickup using Google Directions Transit.
+      // We pass `preferredDateTime` as `departure_time` for this API call's departure time to get a 'realistic' route/duration
+      // based on user preference, even though the final actual journey start will be calculated based on carpool time.
+      const departureTimeForTransitToPickup = Math.floor(
+        preferredDateTime.getTime() / 1000
+      );
+
       const originToPickupUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(
         origin
       )}&destination=${encodeURIComponent(
         balancedRide.carpoolPickupLocation
-      )}&mode=transit&key=${Maps_API_KEY}&departure_time=${departureUnixTime}`;
+      )}&mode=transit&key=${Maps_API_KEY}&departure_time=${departureTimeForTransitToPickup}`;
 
-      // Segment 2: Carpool Dropoff Location to Destination (via Transit)
+      // Fetch data for origin to pickup
+      const originToPickupRes = await fetch(originToPickupUrl);
+      const originToPickupData = await originToPickupRes.json();
+
+      let durationOriginToPickupMinutes = 0;
+      if (
+        originToPickupData.status === "OK" &&
+        originToPickupData.routes.length > 0
+      ) {
+        durationOriginToPickupMinutes = parseDurationToMinutes(
+          originToPickupData.routes[0].legs[0].duration.text
+        );
+      } else {
+        // Log the actual status for debugging API key issues
+        console.warn(
+          "Origin to Carpool Pickup transit route not found or failed:",
+          originToPickupData.status
+        );
+      }
+
+      // Calculate the actual start time of the entire balanced journey
+      // This is carpoolStartTime - time taken to get to pickup point
+      const actualBalancedJourneyStartDate = new Date(
+        actualCarpoolStartTimeDate.getTime() -
+          durationOriginToPickupMinutes * 60 * 1000
+      );
+
+      // Now, for the dropoff to destination segment, calculate its departure time
+      // This is the carpool start time + carpool duration
+      const durationCarpoolMinutes = parseDurationToMinutes(
+        balancedRide.carpoolDurationText
+      );
+      const carpoolDropoffTimeDate = new Date(
+        actualCarpoolStartTimeDate.getTime() +
+          durationCarpoolMinutes * 60 * 1000
+      );
+      const departureTimeForTransitFromDropoff = Math.floor(
+        carpoolDropoffTimeDate.getTime() / 1000
+      );
+
       const dropoffToDestinationUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(
         balancedRide.carpoolDropoffLocation
       )}&destination=${encodeURIComponent(
         destination
-      )}&&mode=transit&key=${Maps_API_KEY}&departure_time=${departureUnixTime}`;
+      )}&mode=transit&key=${Maps_API_KEY}&departure_time=${departureTimeForTransitFromDropoff}`; // Use calculated carpool dropoff time as departure for next leg
 
-      const [originToPickupRes, dropoffToDestinationRes] = await Promise.all([
-        fetch(originToPickupUrl),
-        fetch(dropoffToDestinationUrl),
-      ]);
-
-      const originToPickupData = await originToPickupRes.json();
+      // Fetch data for dropoff to destination
+      const dropoffToDestinationRes = await fetch(dropoffToDestinationUrl);
       const dropoffToDestinationData = await dropoffToDestinationRes.json();
 
-      // IMPORTANT: Pass preferredDateTime to processSteps for cost calculation
       const stepsToPickup = processSteps(
         originToPickupData,
         false,
         null,
         balancedRide,
-        preferredDateTime // Pass preferredDateTime here
+        preferredDateTime // Still pass preferredDateTime for cost calculation as it's a fixed user preference
       );
 
       const passengerCountBalanced =
@@ -592,7 +668,6 @@ const getRecommendationsForUserJourney = async (req, res) => {
       const carpoolDistanceMeters = carpoolDistanceKm * 1000; // Convert to meters
 
       // Create carpool step (This is the "middle" segment)
-      // The estimatedPrice for balancedRide is now calculated in RideMatchingController
       const carpoolStep = {
         type: "carpool",
         description: `Carpool with RideBud`,
@@ -603,7 +678,7 @@ const getRecommendationsForUserJourney = async (req, res) => {
           text: balancedRide.carpoolDistanceText,
           value: carpoolDistanceMeters,
         },
-        eta: "N/A", // This ETA will be overwritten cumulatively
+        eta: "N/A", // Will be set cumulatively below
         start_address: balancedRide.carpoolPickupLocation || "",
         end_address: balancedRide.carpoolDropoffLocation || "",
         matchedRideId: balancedRide._id,
@@ -616,7 +691,7 @@ const getRecommendationsForUserJourney = async (req, res) => {
         true,
         destination,
         balancedRide,
-        preferredDateTime // Pass preferredDateTime here
+        preferredDateTime // Still pass preferredDateTime for cost calculation
       );
 
       const balancedSteps = [
@@ -627,20 +702,27 @@ const getRecommendationsForUserJourney = async (req, res) => {
 
       let totalDurationMinutes = 0;
       let totalCostNumeric = 0; // Track total cost numerically
+      let cumulativeDurationFromJourneyStart = 0; // Cumulative duration from the *actual start of the balanced journey*
 
       // Calculate cumulative ETA and total cost for all balancedSteps
       for (const step of balancedSteps) {
-        totalDurationMinutes += parseDurationToMinutes(step.duration);
+        const stepDurationMins = parseDurationToMinutes(step.duration);
+        cumulativeDurationFromJourneyStart += stepDurationMins; // Accumulate duration
+
+        // Set ETA for each step based on the actual start time of the journey
+        step.eta =
+          calculateETA(
+            actualBalancedJourneyStartDate,
+            cumulativeDurationFromJourneyStart
+          ) || "N/A";
+
         // Parse cost from string to number for summation
         const stepCostNumeric = parseFloat(step.cost.replace("$", "")) || 0;
         totalCostNumeric += stepCostNumeric;
 
-        // Ensure ETA is always a string, even if initial calculation fails
-        // Use preferredDateTime for initial ETA calculation, then cumulative time
-        step.eta =
-          calculateETA(preferredDateTime, totalDurationMinutes) || // Start from preferredDateTime
-          "N/A";
+        totalDurationMinutes += stepDurationMins; // This remains for overall total duration calculation
       }
+      // NEW LOGIC END
 
       const totalTimeFormatted =
         totalDurationMinutes < 60
@@ -665,13 +747,14 @@ const getRecommendationsForUserJourney = async (req, res) => {
           userJourneyId: userJourney._id,
           type: "balanced-carpool",
           name: "Balanced (Carpool + Transit)",
+          departureTime: actualBalancedJourneyStartDate,
           totalTime: totalTimeFormatted,
           passengersCount: passengerCountBalanced,
           totalCostPerPax: `$${totalCostNumeric.toFixed(2)}`, // Use calculated total cost
           carpoolRideCost: `$${balancedRide.estimatedPrice.toFixed(2)}`, // Use calculated cost per passenger
-          carpoolStartTime: preferredDateTime, // Changed to preferredDateTime as the start of the entire balanced journey
+          carpoolStartTime: actualBalancedJourneyStartDate, // Set to the newly calculated actual journey start time
           eta: calculateETA(
-            preferredDateTime, // Use preferredDateTime for the overall journey ETA
+            actualBalancedJourneyStartDate, // Use the actual journey start time
             totalDurationMinutes
           ),
           totalDistance: totalDistanceFormatted,

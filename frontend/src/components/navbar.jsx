@@ -23,7 +23,7 @@ const NavbarButton = ({
   return (
     <Button
       variant={variant}
-      className="relative h-10 text-white hover:bg-green-700 flex items-center py-2 px-3 text-xs md:text-sm hover:text-white"
+      className="relative h-10 text-white hover:bg-green-800 md:hover:bg-green-700 flex items-center py-2 px-3 text-xs md:text-sm hover:text-white"
       onClick={onClick}
     >
       {Icon && <Icon className="h-4 w-4 mr-1" />}

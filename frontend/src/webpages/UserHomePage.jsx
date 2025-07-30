@@ -38,7 +38,7 @@ const UserHomePage = () => {
     async function fetchUpcoming() {
       try {
         const res = await fetch(
-          "http://localhost:5000/api/user-journeys/upcoming",
+          `${import.meta.env.VITE_API_BASE_URL}/user-journeys/upcoming`,
           {
             method: "GET",
             credentials: "include",
@@ -70,7 +70,7 @@ const UserHomePage = () => {
               carpoolRide?.carpoolStartTime
             ).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             status: carpoolRide?.status,
-            price: carpoolRide?.estimatedPrice,
+            totalCostPerPax: userJourney.totalCostPerPax,
           };
 
           setUpcomingData(upcomingRide);
@@ -116,7 +116,9 @@ const UserHomePage = () => {
       });
 
       const res = await fetch(
-        `http://localhost:5000/api/marketplace/get-rides?${query.toString()}`,
+        `${
+          import.meta.env.VITE_API_BASE_URL
+        }/marketplace/get-rides?${query.toString()}`,
         {
           method: "GET",
           credentials: "include",

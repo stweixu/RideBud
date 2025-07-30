@@ -4,7 +4,7 @@ const ConversationList = ({ onSelect, currentUserId }) => {
   const [conversations, setConversations] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/chat/conversations", {
+    fetch(`${import.meta.env.VITE_API_BASE_URL}/chat/conversations`, {
       credentials: "include",
     })
       .then((res) => res.json())
@@ -87,7 +87,9 @@ const ConversationList = ({ onSelect, currentUserId }) => {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/chat/conversations/${conversationId}`,
+        `${
+          import.meta.env.VITE_API_BASE_URL
+        }/chat/conversations/${conversationId}`,
         {
           method: "DELETE",
           credentials: "include",

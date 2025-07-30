@@ -23,7 +23,9 @@ const JourneyNavigationPage = () => {
 
       try {
         const response = await fetch(
-          `http://localhost:5000/api/user-journeys/navigate/${userJourneyId}`,
+          `${
+            import.meta.env.VITE_API_BASE_URL
+          }/user-journeys/navigate/${userJourneyId}`,
           { credentials: "include" }
         );
 
@@ -114,12 +116,15 @@ const JourneyNavigationPage = () => {
           <CardContent>
             {/* Use JourneyDetailsDisplay for the selected journey */}
             <JourneyDetailsDisplay
-              journey={journeyNavigation}
+              journey={{
+                ...journeyNavigation,
+                passengersCount: userJourneyData.passengersCount,
+              }}
               rideRoute={{
                 origin: userJourneyData.journeyOrigin,
                 destination: userJourneyData.journeyDestination,
               }}
-              startTime={userJourneyData.matchedRideId?.carpoolStartTime}
+              startTime={userJourneyData.preferredDateTime}
               showSelectionButton={false} // No selection button needed on a navigation page
             />
           </CardContent>

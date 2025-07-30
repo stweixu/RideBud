@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,21 @@ import {
   Calendar,
   Navigation,
   ArrowRight,
+  Users,
+  Loader2, // Import Loader2 for potential loading states in the dialog
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose, // Import DialogClose for closing the dialog programmatically
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const MarketplaceRideCard = ({ ride, onJoinRide, isLoading, message }) => {
   const {
@@ -20,8 +34,12 @@ const MarketplaceRideCard = ({ ride, onJoinRide, isLoading, message }) => {
     estimatedPrice: price,
     carpoolDistanceText: distance,
     carpoolDurationText: duration,
+    passengersCount, // This is the existing passengers in the carpool
     rideBuddy = { name: "Unknown", avatar: null, rating: 0 },
   } = ride;
+
+  const [selectedPassengers, setSelectedPassengers] = useState("1"); // State for selected passengers in dialog
+  const [isDialogOpen, setIsDialogOpen] = useState(false); // State to control dialog open/close
 
   // Format time and date display
   let displayDate = "N/A Date";
@@ -51,6 +69,18 @@ const MarketplaceRideCard = ({ ride, onJoinRide, isLoading, message }) => {
       displayTime = "";
     }
   }
+
+  // Handle the confirmation from the dialog
+  const handleConfirmJoinRide = () => {
+    // Call the original onJoinRide prop, passing the selected passenger count
+    // Convert selectedPassengers to a number
+    onJoinRide?.(ride, parseInt(selectedPassengers, 10));
+    // The dialog will close automatically if `onJoinRide` is successful and
+    // triggers a state update that re-renders the parent, or you can manually close it.
+    // For now, let's assume parent handles loading and closing.
+    // If you need to explicitly close it here regardless of parent's isLoading:
+    // setIsDialogOpen(false);
+  };
 
   return (
     <Card className="max-w-4xl bg-white shadow-md hover:shadow-lg transition-shadow">
@@ -101,11 +131,15 @@ const MarketplaceRideCard = ({ ride, onJoinRide, isLoading, message }) => {
                 {rideBuddy.name}
               </h3>
 
-              {/* <div className="flex items-center text-sm md:text-md text-yellow-500">
-                <Star className="h4 w-4 md:size-6 fill-yellow-500 mr-1" />
-                <span>{rideBuddy.rating?.toFixed(1)}</span>
-              </div> 
-              RATING FUNCTIONALITY*/}
+              <div className="flex items-center text-sm md:text-md ">
+                <Users className="size-6 text-green-600 mt-1 mr-1" />
+                <p className="text-sm">
+                  {" "}
+                  {passengersCount} passenger
+                  {passengersCount > 1 ? "s" : ""}
+                </p>
+              </div>
+              {/* RATING FUNCTIONALITY*/}
             </div>
           </div>
 
@@ -170,36 +204,61 @@ const MarketplaceRideCard = ({ ride, onJoinRide, isLoading, message }) => {
       </CardContent>
 
       <CardFooter className="p-3 md:p-4 flex flex-col gap-2">
-        <Button
-          className="w-full bg-green-600 hover:bg-green-700 text-white text-xs md:text-sm h-9 md:h-11 flex items-center justify-center"
-          onClick={() => onJoinRide?.(ride)}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <svg
-              className="animate-spin h-5 w-5 text-white"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button
+              className="w-full bg-green-600 hover:bg-green-700 text-white text-xs md:text-sm h-9 md:h-11 flex items-center justify-center"
+              disabled={isLoading}
             >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 018 8h-4l3 3-3 3h4a8 8 0 01-8 8v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
-              ></path>
-            </svg>
-          ) : (
-            "Join Ride"
-          )}
-        </Button>
+              {isLoading ? (
+                <Loader2 className="animate-spin h-5 w-5 text-white" />
+              ) : (
+                "Join Ride"
+              )}
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px] p-6">
+            <DialogHeader>
+              <DialogTitle>Select Passengers</DialogTitle>
+              <DialogDescription>
+                How many passengers will be joining this ride (including
+                yourself)?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <RadioGroup
+                defaultValue="1"
+                value={selectedPassengers}
+                onValueChange={setSelectedPassengers}
+                className="flex flex-col space-y-2"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="1" id="r1" />
+                  <Label htmlFor="r1">1 Passenger</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="2" id="r2" />
+                  <Label htmlFor="r2">2 Passengers</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DialogClose>
+              <Button
+                onClick={handleConfirmJoinRide}
+                disabled={isLoading} // Disable confirm button during loading
+              >
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  "Confirm"
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {message && (
           <p

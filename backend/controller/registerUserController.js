@@ -35,7 +35,7 @@ const registerUserController = async (req, res) => {
       { upsert: true }
     );
 
-    const verifyLink = `http://localhost:5000/api/verify?token=${token}`;
+    const verifyLink = `${process.env.FRONTEND_BASE_URL}/verify?token=${token}`;
 
     await transporter.sendMail({
       to: email,

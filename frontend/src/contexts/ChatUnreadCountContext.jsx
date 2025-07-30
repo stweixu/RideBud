@@ -6,22 +6,32 @@ import React, {
   useCallback,
 } from "react";
 
+import { useAuth } from "./authContext";
+
 // Create the context
 const ChatUnreadCountContext = createContext(null);
 
 // Create a provider component
 export const ChatUnreadCountProvider = ({ children }) => {
+  const { isAuthenticated } = useAuth();
   const [totalUnreadCount, setTotalUnreadCount] = useState(0);
   const [loadingUnreadCount, setLoadingUnreadCount] = useState(true);
   const [errorUnreadCount, setErrorUnreadCount] = useState(null);
 
   // Function to fetch the unread count
   const fetchTotalUnreadCount = useCallback(async () => {
+    if (!isAuthenticated) {
+      setTotalUnreadCount(0);
+      setLoadingUnreadCount(false);
+      setErrorUnreadCount(null); // Clear any previous errors if logging out
+      return; // Exit early if not authenticated
+    }
+
     try {
       setLoadingUnreadCount(true);
       setErrorUnreadCount(null);
       const response = await fetch(
-        "http://localhost:5000/api/chat/conversations/unread-total",
+        `${import.meta.env.VITE_API_BASE_URL}/chat/conversations/unread-total`,
         {
           credentials: "include", // Important for sending cookies/session
           // Add authorization header if your verifyToken middleware requires it (e.g., Bearer token)

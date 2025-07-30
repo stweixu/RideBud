@@ -35,7 +35,7 @@ const UpcomingRideCard = ({
 
   if (!upcomingRide) {
     return (
-      <Card className="w-[90%] mx-auto bg-white border border-gray-200 shadow-sm p-4 text-center ">
+      <Card className="w-[90%] mx-auto bg-gray-200 border border-gray-200 shadow-sm p-4 text-center">
         <p>No upcoming rides</p>
       </Card>
     );
@@ -52,12 +52,6 @@ const UpcomingRideCard = ({
   };
 
   const handleCardClick = () => {
-    console.log(
-      "UpcomingRideCard: handleCardClick triggered! Event Type:",
-      e.type,
-      "Target:",
-      e.target
-    );
     navigate(`/journey-navigate/${upcomingRide.journeyId}`);
   };
 
@@ -99,7 +93,7 @@ const UpcomingRideCard = ({
             <Button
               variant="outline"
               size="sm"
-              className="text-white bg-green-600 border-green-300 hover:bg-green-700 hover:text-white w-20 md:w-24"
+              className="text-white bg-green-600 border-green-300 hover:bg-green-600 hover:text-white w-20 md:w-24 opacity-60 cursor-default"
               onClick={(e) => {
                 e.stopPropagation();
                 onPayingDeposit();
@@ -142,7 +136,7 @@ const UpcomingRideCard = ({
             </div>
             <div className="flex mr-5 flex-col md:flex-row items-start gap-4">
               <div className="flex items-center gap-2 text-sm">
-                <Calendar className="size-8 md:size-5 text-green-600" />
+                <Calendar className="size-6 md:size-5 text-green-600" />
                 <p className="text-xs md:text-base">
                   {formatDate(upcomingRide.departureDate)}
                 </p>
@@ -153,19 +147,16 @@ const UpcomingRideCard = ({
                   {upcomingRide.departureTime}
                 </p>
               </div>
-              {upcomingRide.price !== undefined && (
+              {upcomingRide.totalCostPerPax !== undefined && (
                 <div className="flex items-center text-xs md:text-base">
-                  <DollarSign className="size-5 md:size-6 text-green-600" />
-                  <span>{upcomingRide.price.toFixed(2)}</span>
+                  <DollarSign className="size-6 md:size-6 text-green-600" />
+                  <span>{upcomingRide.totalCostPerPax}</span>
                 </div>
               )}
             </div>
           </div>
         </div>
       </CardContent>
-
-      {/* The ChatBubble component is now rendered inside OpenChatDialogButton */}
-      {/* No ChatBubble component here anymore */}
     </Card>
   );
 };

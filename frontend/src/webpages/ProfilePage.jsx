@@ -121,14 +121,17 @@ export default function ProfilePage() {
         avatar: profileData.avatar,
       };
 
-      const response = await fetch("http://localhost:5000/api/update-profile", {
-        method: "PATCH", // Using PATCH for partial updates
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(dataToSend),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/update-profile`,
+        {
+          method: "PATCH", // Using PATCH for partial updates
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(dataToSend),
+        }
+      );
 
       const data = await response.json(); // Renamed result to data for consistency
 
@@ -186,7 +189,7 @@ export default function ProfilePage() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/change-password",
+        `${import.meta.env.VITE_API_BASE_URL}/change-password`,
         {
           method: "PATCH",
           headers: {
@@ -251,14 +254,17 @@ export default function ProfilePage() {
 
     try {
       // Updated endpoint to /api/change-email
-      const response = await fetch("http://localhost:5000/api/change-email", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ newEmail }),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/change-email`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ newEmail }),
+        }
+      );
 
       const data = await response.json(); // Renamed result to data for consistency
 

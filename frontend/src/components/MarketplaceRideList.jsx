@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 const MarketplaceRideList = ({
   carpoolRides = [],
-  userPassengersCount = 1,
+  userPassengersCount = 1, // This prop might become redundant if dialog is always used
 }) => {
   const navigate = useNavigate();
   const ridesToDisplay = Array.isArray(carpoolRides) ? carpoolRides : [];
@@ -12,13 +12,14 @@ const MarketplaceRideList = ({
   const [loadingRideId, setLoadingRideId] = useState(null);
   const [messages, setMessages] = useState({});
 
-  const handleJoinRide = async (ride) => {
+  // This function is correctly set up to receive both arguments
+  const handleJoinRide = async (ride, passengerCount) => {
     setLoadingRideId(ride._id);
     setMessages((prev) => ({ ...prev, [ride._id]: null }));
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/marketplace/join-ride`,
+        `${import.meta.env.VITE_API_BASE_URL}/marketplace/join-ride`,
         {
           method: "POST",
           headers: {
@@ -27,7 +28,8 @@ const MarketplaceRideList = ({
           credentials: "include",
           body: JSON.stringify({
             matchedRideId: ride._id,
-            passengersCount: userPassengersCount,
+            // Use the passengerCount received from the dialog
+            passengersCount: passengerCount,
           }),
         }
       );
@@ -74,7 +76,9 @@ const MarketplaceRideList = ({
           <div key={ride._id} className="flex-shrink-0">
             <MarketplaceRideCard
               ride={ride}
-              onJoinRide={() => handleJoinRide(ride)}
+              // Pass the handleJoinRide function directly.
+              // MarketplaceRideCard will now call it with (ride, passengerCount).
+              onJoinRide={handleJoinRide}
               isLoading={loadingRideId === ride._id}
               message={messages[ride._id]}
             />

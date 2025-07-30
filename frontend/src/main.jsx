@@ -10,11 +10,11 @@ import { system } from "@chakra-ui/react/preset";
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <ChakraProvider value={system}>
-      <ChatUnreadCountProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <ChatUnreadCountProvider>
           <App />
-        </AuthProvider>
-      </ChatUnreadCountProvider>
+        </ChatUnreadCountProvider>
+      </AuthProvider>
     </ChakraProvider>
   </StrictMode>
 );

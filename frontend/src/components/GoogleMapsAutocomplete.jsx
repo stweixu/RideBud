@@ -8,6 +8,7 @@ import React, {
 import { Input } from "./ui/input";
 import { Search, LocateFixed, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
+import { cn } from "@/lib/utils"; // Assuming cn is available here
 
 const GoogleMapsAutocomplete = forwardRef(
   (
@@ -19,6 +20,7 @@ const GoogleMapsAutocomplete = forwardRef(
       value,
       onChange,
       onBlur,
+      onFocus, // <--- ADD THIS PROP
       options = {},
       isLocating = false,
       placeSelectedRef,
@@ -178,20 +180,22 @@ const GoogleMapsAutocomplete = forwardRef(
         lastSelectedPlaceName.current = "";
       }
 
+      // Pass the blur event to the parent's onBlur prop
       if (onBlur) onBlur(e);
     };
 
     return (
-      <div className="relative flex-grow flex items-center">
+      <div className={cn("relative flex-grow flex items-center", className)}>
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 size-3 md:size-4" />
         <Input
           ref={inputRef}
           type="text"
           placeholder={placeholder}
-          className={`pl-9 pr-4 h-8 md:h-9 w-full ${className}`}
+          className="pl-9 pr-4 h-8 md:h-9 w-full"
           value={inputValue}
           onChange={handleLocalChange}
           onBlur={handleLocalBlur}
+          onFocus={onFocus} // <--- PASS onFocus TO INPUT HERE
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault(); // Prevent form submission / focus shift

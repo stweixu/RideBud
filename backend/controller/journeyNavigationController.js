@@ -44,6 +44,7 @@ const selectJourney = async (req, res) => {
       eta: selectedJourney.eta,
       totalDistance: selectedJourney.totalDistance,
       steps: selectedJourney.steps,
+      journeyDepartureTime: selectedJourney.departureTime, // Ensure this is included
       // Add the matchedCarpoolRideId to the JourneyNavigation document if it's part of its schema
       matchedRideId: matchedCarpoolRideId, // Assuming you have a 'carpoolRideId' field in JourneyNavigation model
     };
@@ -63,7 +64,12 @@ const selectJourney = async (req, res) => {
 
     const updatedUserJourney = await UserJourney.findByIdAndUpdate(
       userJourneyId,
-      { $set: { journeyNavigation: savedJourney._id } }, // Assuming 'selected' status
+      {
+        $set: {
+          journeyNavigation: savedJourney._id,
+          preferredDateTime: selectedJourney.departureTime,
+        },
+      },
       { new: true, runValidators: true } // Return the updated document and run validators
     );
 
@@ -125,6 +131,7 @@ const getJourneyNavigationsForUserJourney = async (req, res) => {
         preferredDateTime: userJourney.preferredDateTime,
         status: userJourney.status,
         matchedRideId: userJourney.matchedRideId, // Include if needed by frontend
+        passengersCount: userJourney.matchedRideId.passengersCount, // Include if needed by frontend
         // Add any other UserJourney fields that JourneyNavigationPage needs
       },
       journeyNavigation: userJourney.journeyNavigation, // <-- Frontend expects this

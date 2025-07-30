@@ -65,10 +65,13 @@ const MyJourneysPage = () => {
     setLoadingJourneys(true);
     setJourneysError(null);
     try {
-      const response = await fetch("http://localhost:5000/api/user-journeys", {
-        method: "GET",
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/user-journeys`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
       const data = await response.json();
 
       if (response.ok) {
@@ -156,20 +159,26 @@ const MyJourneysPage = () => {
 
       switch (dialogActionType) {
         case "delete":
-          endpoint = `http://localhost:5000/api/user-journeys/${journeyIdToActOn}`;
+          endpoint = `${
+            import.meta.env.VITE_API_BASE_URL
+          }/user-journeys/${journeyIdToActOn}`;
           method = "DELETE";
           successMessage = "Journey deleted successfully!";
           errorMessage = "Failed to delete journey.";
           break;
         case "complete":
-          endpoint = `http://localhost:5000/api/user-journeys/${journeyIdToActOn}/complete`;
+          endpoint = `${
+            import.meta.env.VITE_API_BASE_URL
+          }/user-journeys/${journeyIdToActOn}/complete`;
           method = "PATCH";
           successMessage = "Journey marked as completed!";
           errorMessage = "Failed to complete journey.";
           break;
         case "leave":
         case "reselect": // Both use the same leave-ride endpoint
-          endpoint = `http://localhost:5000/api/user-journeys/${journeyIdToActOn}/leave-ride`;
+          endpoint = `${
+            import.meta.env.VITE_API_BASE_URL
+          }/user-journeys/${journeyIdToActOn}/leave-ride`;
           method = "POST";
           successMessage = "You have left the ride!";
           errorMessage = "Failed to leave ride.";
@@ -232,7 +241,7 @@ const MyJourneysPage = () => {
   const handleEditJourney = async (journeyId, updatedData) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/user-journeys/${journeyId}`,
+        `${import.meta.env.VITE_API_BASE_URL}/user-journeys/${journeyId}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },

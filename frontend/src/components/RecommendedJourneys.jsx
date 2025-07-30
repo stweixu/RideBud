@@ -74,7 +74,7 @@ const RecommendedJourneys = ({
         };
 
         const createCarpoolResponse = await fetch(
-          "http://localhost:5000/api/carpool-rides",
+          `${import.meta.env.VITE_API_BASE_URL}/carpool-rides`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -103,7 +103,9 @@ const RecommendedJourneys = ({
 
         // For balanced, the actual "matching" with the user journey happens here:
         const updateJourneyResponse = await fetch(
-          `http://localhost:5000/api/user-journeys/${userJourneyId}/match`,
+          `${
+            import.meta.env.VITE_API_BASE_URL
+          }/user-journeys/${userJourneyId}/match`,
           {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
@@ -130,7 +132,7 @@ const RecommendedJourneys = ({
       }
 
       const selectJourneyNavigationResponse = await fetch(
-        `http://localhost:5000/api/user-journeys/select`,
+        `${import.meta.env.VITE_API_BASE_URL}/user-journeys/select`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

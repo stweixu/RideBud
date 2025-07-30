@@ -116,9 +116,8 @@ const JourneyDetailsDisplay = ({
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapLoading, setMapLoading] = useState(true);
   const [mapError, setMapError] = useState(null);
-  const [highlightedStepId, setHighlightedStepId] = useState(null);
-
-  const [coordsToHighlight, setCoordsToHighlight] = useState(null);
+  const [highlightedStepId, setHighlightedStepId] = useState(null); // For hover state
+  const [clickedStepId, setClickedStepId] = useState(null); // NEW: For click state
 
   const loadGoogleMapsScript = useCallback(() => {
     if (window.google?.maps) {
@@ -421,8 +420,8 @@ const JourneyDetailsDisplay = ({
     setMapLoaded(false);
     setMapLoading(true);
     setMapError(null);
-    setCoordsToHighlight(null);
     setHighlightedStepId(null);
+    setClickedStepId(null); // NEW: Reset clicked state on new journey/route
     polylinesRef.current.forEach((polyline) => polyline.setMap(null));
     polylinesRef.current = [];
     markersRef.current.forEach((marker) => marker.setMap(null));
@@ -452,10 +451,47 @@ const JourneyDetailsDisplay = ({
             const { width, height } = entry.contentRect;
             if (width > 0 && height > 0) {
               window.google.maps.event.trigger(map, "resize");
-              // Only re-fit bounds if no specific step is highlighted,
-              // or pan to highlighted coordinate after resize
-              if (coordsToHighlight) {
-                map.panTo(coordsToHighlight);
+              // Determine coordinates to pan to, prioritizing clicked over initial bounds
+              let targetCoords = null;
+              if (clickedStepId) {
+                // Find coords for clickedStepId
+                if (
+                  clickedStepId.startsWith("start-") &&
+                  journey.steps[0]?.start_location
+                ) {
+                  targetCoords = new window.google.maps.LatLng(
+                    journey.steps[0].start_location.lat,
+                    journey.steps[0].start_location.lng
+                  );
+                } else if (
+                  clickedStepId.startsWith("end-") &&
+                  journey.steps[journey.steps.length - 1]?.end_location
+                ) {
+                  targetCoords = new window.google.maps.LatLng(
+                    journey.steps[journey.steps.length - 1].end_location.lat,
+                    journey.steps[journey.steps.length - 1].end_location.lng
+                  );
+                } else {
+                  const targetStep = journey.steps.find(
+                    (step, index) =>
+                      `${step.description}-${index}` === clickedStepId
+                  );
+                  if (targetStep && targetStep.end_location) {
+                    targetCoords = new window.google.maps.LatLng(
+                      targetStep.end_location.lat,
+                      targetStep.end_location.lng
+                    );
+                  } else if (targetStep && targetStep.start_location) {
+                    targetCoords = new window.google.maps.LatLng(
+                      targetStep.start_location.lat,
+                      targetStep.start_location.lng
+                    );
+                  }
+                }
+              }
+
+              if (targetCoords) {
+                map.panTo(targetCoords);
               } else if (initialBoundsRef.current) {
                 map.fitBounds(initialBoundsRef.current);
               }
@@ -472,7 +508,7 @@ const JourneyDetailsDisplay = ({
         resizeObserver.unobserve(currentMapRef);
       }
     };
-  }, [mapLoaded, coordsToHighlight]); // Depend on mapLoaded and coordsToHighlight
+  }, [mapLoaded, clickedStepId, journey]); // Depend on mapLoaded, clickedStepId, and journey for coord lookup
 
   // Effect to handle highlighting on the map
   useEffect(() => {
@@ -481,72 +517,174 @@ const JourneyDetailsDisplay = ({
 
     const map = mapInstanceRef.current;
 
-    if (coordsToHighlight) {
+    // Determine the actual coordinates to use for map centering/marker based on click > hover
+    let currentHighlightCoords = null;
+    let targetId = clickedStepId || highlightedStepId; // Prioritize clicked, then hover
+
+    if (targetId) {
+      if (targetId.startsWith("start-") && journey.steps[0]?.start_location) {
+        currentHighlightCoords = new window.google.maps.LatLng(
+          journey.steps[0].start_location.lat,
+          journey.steps[0].start_location.lng
+        );
+      } else if (
+        targetId.startsWith("end-") &&
+        journey.steps[journey.steps.length - 1]?.end_location
+      ) {
+        currentHighlightCoords = new window.google.maps.LatLng(
+          journey.steps[journey.steps.length - 1].end_location.lat,
+          journey.steps[journey.steps.length - 1].end_location.lng
+        );
+      } else {
+        const targetStep = journey.steps.find(
+          (step, index) => `${step.description}-${index}` === targetId
+        );
+        if (targetStep) {
+          if (targetStep.end_location) {
+            currentHighlightCoords = new window.google.maps.LatLng(
+              targetStep.end_location.lat,
+              targetStep.end_location.lng
+            );
+          } else if (targetStep.start_location) {
+            // Fallback to start location if end not available
+            currentHighlightCoords = new window.google.maps.LatLng(
+              targetStep.start_location.lat,
+              targetStep.start_location.lng
+            );
+          }
+        }
+      }
+    }
+
+    if (currentHighlightCoords) {
       if (!highlightMarkerRef.current) {
         highlightMarkerRef.current = new window.google.maps.Marker({
           map: map,
           animation: window.google.maps.Animation.DROP, // Drop animation
         });
       }
-      highlightMarkerRef.current.setPosition(coordsToHighlight);
-      highlightMarkerRef.current.setMap(map);
-      map.panTo(coordsToHighlight);
+      highlightMarkerRef.current.setPosition(currentHighlightCoords);
+      highlightMarkerRef.current.setMap(map); // Ensure it's on the map
+      map.panTo(currentHighlightCoords);
       map.setZoom(12.5); // Zoom in when highlighting a specific step
     } else {
+      // If neither clickedStepId nor highlightedStepId (from hover) is set, clear highlight
       if (highlightMarkerRef.current) {
         highlightMarkerRef.current.setMap(null);
       }
       // Reset map view to overall route bounds if no step is highlighted
-      if (mapLoaded && mapInstanceRef.current && initialBoundsRef.current) {
+      if (
+        mapLoaded &&
+        mapInstanceRef.current &&
+        initialBoundsRef.current &&
+        !clickedStepId
+      ) {
+        // Only reset if nothing is clicked
         mapInstanceRef.current.fitBounds(initialBoundsRef.current);
       }
     }
-  }, [coordsToHighlight, mapLoaded]);
+  }, [clickedStepId, highlightedStepId, journey, mapLoaded]); // Added clickedStepId to dependencies
 
   const handleStepHover = useCallback(
     (step, index) => {
-      // Determine the coordinate to highlight based on the step type or details
+      // Only apply hover effect if no step is currently clicked
+      if (clickedStepId) {
+        return;
+      }
+
       let highlightCoord = null;
-      // For the first logical point (the start of the first step)
+      const uniqueStepId = `${step.description}-${index}`;
+
+      // Logic to determine highlightCoord for hover
       if (index === 0 && step.start_location) {
         highlightCoord = new window.google.maps.LatLng(
           step.start_location.lat,
           step.start_location.lng
         );
       } else if (step.end_location) {
-        // For intermediate step ends and overall end
         highlightCoord = new window.google.maps.LatLng(
           step.end_location.lat,
           step.end_location.lng
         );
       } else if (step.start_address) {
-        // Fallback if no precise coordinates, though precise coords are preferred for map interaction
         console.warn(
           "No precise start_location/end_location for step hover, falling back to address string."
         );
       }
 
       if (highlightCoord) {
-        setCoordsToHighlight(highlightCoord);
-        setHighlightedStepId(step.id || `${step.description}-${index}`);
+        setHighlightedStepId(uniqueStepId);
       }
     },
-    [] // No dependency on journey.steps needed here as step object is passed directly
+    [clickedStepId] // Depend on clickedStepId
   );
 
   const handleStepLeave = useCallback(() => {
-    setCoordsToHighlight(null);
+    // Only clear hover effect if no step is currently clicked
+    if (clickedStepId) {
+      return;
+    }
     setHighlightedStepId(null);
-  }, []);
+  }, [clickedStepId]);
 
   const handleStepClick = useCallback(
     (step, index) => {
-      // Currently, click has the same effect as hover for highlighting.
-      // You could expand this for more detailed info or interactions.
-      handleStepHover(step, index);
+      const uniqueStepId = `${step.description}-${index}`;
+      let targetCoords = null;
+
+      // Determine the coordinate for the clicked step
+      if (index === 0 && step.start_location) {
+        targetCoords = new window.google.maps.LatLng(
+          step.start_location.lat,
+          step.start_location.lng
+        );
+      } else if (step.end_location) {
+        targetCoords = new window.google.maps.LatLng(
+          step.end_location.lat,
+          step.end_location.lng
+        );
+      } else if (step.start_address) {
+        console.warn(
+          "No precise start_location/end_location for clicked step, falling back to address string."
+        );
+      }
+
+      // If the same step is clicked again, de-select it
+      if (clickedStepId === uniqueStepId) {
+        setClickedStepId(null);
+        setHighlightedStepId(null); // Clear both as we're un-clicking
+      } else {
+        // Otherwise, set the clicked step and its coordinates
+        setClickedStepId(uniqueStepId);
+        setHighlightedStepId(uniqueStepId); // Keep highlighted for visual feedback
+      }
     },
-    [handleStepHover]
+    [clickedStepId] // Depend on clickedStepId to toggle
   );
+
+  // Separate click handler for the "Start Journey" div
+  const handleStartJourneyClick = useCallback(() => {
+    const uniqueId = `start-${rideRoute.origin}`;
+    if (clickedStepId === uniqueId) {
+      setClickedStepId(null);
+      setHighlightedStepId(null);
+    } else {
+      setClickedStepId(uniqueId);
+      setHighlightedStepId(uniqueId);
+    }
+  }, [clickedStepId, rideRoute.origin]);
+
+  // Separate click handler for the "End Journey" div
+  const handleEndJourneyClick = useCallback(() => {
+    const uniqueId = `end-${rideRoute.destination}`;
+    if (clickedStepId === uniqueId) {
+      setClickedStepId(null);
+      setHighlightedStepId(null);
+    } else {
+      setClickedStepId(uniqueId);
+      setHighlightedStepId(uniqueId);
+    }
+  }, [clickedStepId, rideRoute.destination]);
 
   let cumulativeTimeInMinutes = 0;
   const steps = journey.steps || [];
@@ -615,33 +753,23 @@ const JourneyDetailsDisplay = ({
               {/* Start Point - Now represents the start of the first journey step, colored green */}
               <div
                 className={`flex items-start gap-3 relative pb-4 cursor-pointer transition-all duration-200 ${
-                  highlightedStepId === `start-${rideRoute.origin}`
+                  highlightedStepId === `start-${rideRoute.origin}` ||
+                  clickedStepId === `start-${rideRoute.origin}`
                     ? "bg-blue-50 border-l-4 border-blue-500 rounded-lg p-2 -ml-2"
                     : ""
                 }`}
                 onMouseEnter={() => {
-                  if (journey.steps && journey.steps[0]?.start_location) {
-                    setCoordsToHighlight(
-                      new window.google.maps.LatLng(
-                        journey.steps[0].start_location.lat,
-                        journey.steps[0].start_location.lng
-                      )
-                    );
+                  // Only hover if no step is currently clicked
+                  if (
+                    !clickedStepId &&
+                    journey.steps &&
+                    journey.steps[0]?.start_location
+                  ) {
                     setHighlightedStepId(`start-${rideRoute.origin}`);
                   }
                 }}
                 onMouseLeave={handleStepLeave}
-                onClick={() => {
-                  if (journey.steps && journey.steps[0]?.start_location) {
-                    setCoordsToHighlight(
-                      new window.google.maps.LatLng(
-                        journey.steps[0].start_location.lat,
-                        journey.steps[0].start_location.lng
-                      )
-                    );
-                    setHighlightedStepId(`start-${rideRoute.origin}`);
-                  }
-                }}
+                onClick={handleStartJourneyClick} // Use the new dedicated click handler
               >
                 {/* Vertical line for connecting start to first step */}
                 {steps.length > 0 && (
@@ -683,7 +811,10 @@ const JourneyDetailsDisplay = ({
                     onHoverStep={(s) => handleStepHover(s, index)}
                     onLeaveStep={handleStepLeave}
                     onClickStep={(s) => handleStepClick(s, index)}
-                    isHighlighted={highlightedStepId === uniqueStepId}
+                    isHighlighted={
+                      highlightedStepId === uniqueStepId ||
+                      clickedStepId === uniqueStepId
+                    } // Highlight if hovered OR clicked
                     formatTimeWithOffset={formatTimeWithOffset}
                     getLucideIcon={getLucideIcon} // Pass helper function
                   />
@@ -693,44 +824,23 @@ const JourneyDetailsDisplay = ({
               {/* End Point (Overall Journey Destination) */}
               <div
                 className={`flex items-start gap-3 relative cursor-pointer transition-all duration-200 ${
-                  highlightedStepId === `end-${rideRoute.destination}`
+                  highlightedStepId === `end-${rideRoute.destination}` ||
+                  clickedStepId === `end-${rideRoute.destination}`
                     ? "bg-blue-50 border-l-4 border-blue-500 rounded-lg p-2 -ml-2"
                     : ""
                 }`}
                 onMouseEnter={() => {
-                  // For the overall end point, highlight its end location, which is from the last step
+                  // Only hover if no step is currently clicked
                   if (
+                    !clickedStepId &&
                     journey.steps &&
                     journey.steps[journey.steps.length - 1]?.end_location
                   ) {
-                    setCoordsToHighlight(
-                      new window.google.maps.LatLng(
-                        journey.steps[
-                          journey.steps.length - 1
-                        ].end_location.lat,
-                        journey.steps[journey.steps.length - 1].end_location.lng
-                      )
-                    );
                     setHighlightedStepId(`end-${rideRoute.destination}`);
                   }
                 }}
                 onMouseLeave={handleStepLeave}
-                onClick={() => {
-                  if (
-                    journey.steps &&
-                    journey.steps[journey.steps.length - 1]?.end_location
-                  ) {
-                    setCoordsToHighlight(
-                      new window.google.maps.LatLng(
-                        journey.steps[
-                          journey.steps.length - 1
-                        ].end_location.lat,
-                        journey.steps[journey.steps.length - 1].end_location.lng
-                      )
-                    );
-                    setHighlightedStepId(`end-${rideRoute.destination}`);
-                  }
-                }}
+                onClick={handleEndJourneyClick} // Use the new dedicated click handler
               >
                 <div className="flex-shrink-0 size-10 flex items-center justify-center bg-red-600 rounded-full text-white z-10 shadow-md">
                   <MapPin className="h-5 w-5" />

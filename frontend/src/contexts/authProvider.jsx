@@ -13,7 +13,9 @@ export const AuthProvider = ({ children }) => {
   const fetchResetJourneys = async () => {
     try {
       const res = await fetch(
-        "http://localhost:5000/api/user-journeys/reset-by-main-rider",
+        `${
+          import.meta.env.VITE_API_BASE_URL
+        }/user-journeys/reset-by-main-rider`,
         {
           credentials: "include",
         }
@@ -46,7 +48,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    await fetch("http://localhost:5000/api/logout", {
+    await fetch(`${import.meta.env.VITE_API_BASE_URL}/logout`, {
       method: "POST",
       credentials: "include",
     });
@@ -58,10 +60,13 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/auth-check", {
-          method: "GET",
-          credentials: "include",
-        });
+        const res = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/auth-check`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
         const data = await res.json();
         setIsAuthenticated(data.isAuthenticated);
         if (data.isAuthenticated) {

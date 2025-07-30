@@ -17,6 +17,8 @@ import {
   JourneyRecommendationsPage,
   JourneyNavigatePage,
   ConversationListPage,
+  ForgotPasswordPage,
+  ResetPasswordPage,
 } from "./webpages"; // Import your pages
 import { useAuth } from "./contexts/authContext"; // Import the useAuth hook
 import ProtectedRoute from "./components/ProtectedRoute"; // Import ProtectedRoute
@@ -41,6 +43,24 @@ const App = () => {
             path="/register"
             element={
               !isAuthenticated ? <RegistrationPage /> : <Navigate to="/home" />
+            }
+          />
+
+          <Route
+            path="/forgot-password"
+            element={
+              !isAuthenticated ? (
+                <ForgotPasswordPage />
+              ) : (
+                <Navigate to="/home" />
+              )
+            }
+          />
+
+          <Route
+            path="/reset-password"
+            element={
+              !isAuthenticated ? <ResetPasswordPage /> : <Navigate to="/home" />
             }
           />
 

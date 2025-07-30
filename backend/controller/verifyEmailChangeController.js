@@ -4,6 +4,8 @@ const jwt = require("jsonwebtoken");
 
 const verifyEmailChangeController = async (req, res) => {
   const { token } = req.query;
+  const frontendBaseUrl =
+    process.env.FRONTEND_BASE_URL || "http://localhost:5173";
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -22,7 +24,7 @@ const verifyEmailChangeController = async (req, res) => {
       return res
         .status(400)
         .redirect(
-          "http://localhost:5173/profile?email_change_error=true&msg=invalid_or_expired_link"
+          `${frontendBaseUrl}/profile?email_change_error=true&msg=invalid_or_expired_link`
         );
     }
 
@@ -37,7 +39,7 @@ const verifyEmailChangeController = async (req, res) => {
       return res
         .status(400)
         .redirect(
-          "http://localhost:5173/profile?email_change_error=true&msg=email_already_taken"
+          `${frontendBaseUrl}/profile?email_change_error=true&msg=email_already_taken`
         );
     }
 
@@ -48,7 +50,7 @@ const verifyEmailChangeController = async (req, res) => {
       return res
         .status(404)
         .redirect(
-          "http://localhost:5173/profile?email_change_error=true&msg=user_not_found"
+          `${frontendBaseUrl}/profile?email_change_error=true&msg=user_not_found`
         );
     }
 
@@ -59,12 +61,12 @@ const verifyEmailChangeController = async (req, res) => {
     await PendingEmailChange.deleteOne({ _id: pendingChange._id });
 
     // Redirect to profile page with success message
-    res.redirect("http://localhost:5173/profile?email_change_success=true");
+    res.redirect(`${frontendBaseUrl}/profile?email_change_success=true`);
   } catch (err) {
     console.error("Email change verification error:", err);
     // Redirect to profile page with a generic error
     res.redirect(
-      "http://localhost:5173/profile?email_change_error=true&msg=verification_failed"
+      `${frontendBaseUrl}/profile?email_change_error=true&msg=verification_failed`
     );
   }
 };

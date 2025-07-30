@@ -4,7 +4,6 @@ const express = require("express");
 const router = express.Router();
 
 // Import individual route modules
-const locationRouter = require("./locationRouter");
 const registerRouter = require("./account-creation/registerRouter");
 const loginRouter = require("./session-management/loginRouter");
 const logOutRouter = require("./session-management/logOutRouter");
@@ -21,12 +20,13 @@ const carpoolRideRouter = require("./user-journey/carpoolRideRouter");
 const recommendedJourneyRouter = require("./user-journey/recommendedJourneyRouter");
 const marketplaceRideRouter = require("./marketplace-ride/marketplaceRideRouter");
 const chatRouter = require("./chatRouter"); // Import chat routes
+const forgotPasswordRouter = require("./forgotPasswordRouter"); // Import reset password routes
+const googleLoginRouter = require("./account-creation/googleLogin"); // Import Google login routes
 
 // Define the routeMap object to map paths to routers
 const routeMap = {
   "/register": registerRouter,
   "/login": loginRouter,
-  "/location": locationRouter,
   "/logout": logOutRouter,
   "/auth-check": authCheckRouter,
   "/me": meRouter,
@@ -40,7 +40,9 @@ const routeMap = {
   "/carpool-rides": carpoolRideRouter,
   "/recommended-journeys": recommendedJourneyRouter,
   "/marketplace": marketplaceRideRouter,
-  "/chat": chatRouter, // Add chat routes here
+  "/chat": chatRouter,
+  "/forgot-password": forgotPasswordRouter,
+  "/auth/google": googleLoginRouter,
 };
 
 // Dynamically use routes from the routeMap object
