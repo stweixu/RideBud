@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const User = require("../models/User"); // Assuming you're using Mongoose
+const User = require("../models/User"); 
 
 const loginUserController = async (req, res) => {
   const { email, password } = req.body;
@@ -28,9 +28,10 @@ const loginUserController = async (req, res) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: false,
-      // secure: process.env.NODE_ENV === "production", // Ensure cookies are sent over HTTPS in production
+      // secure: process.env.NODE_ENV === "production", 
+      // Ensure cookies are sent over HTTPS in production
       sameSite: "Strict", // Prevents CSRF attacks
-      maxAge: 3600000 * 4, // Set the expiry time (4 hour in this case)
+      maxAge: 3600000 * 4, // Set the expiry time, 4 hours
       path: "/",
     });
 
@@ -39,7 +40,6 @@ const loginUserController = async (req, res) => {
       user: {
         id: user._id,
         name: user.displayName,
-        // Add any other user info you want to send back
       },
     });
   } catch (err) {

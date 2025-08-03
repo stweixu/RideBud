@@ -12,3 +12,4 @@ export { default as JourneyNavigatePage } from "./JourneyNavigationPage";
 export { default as ConversationListPage } from "./ConversationListPage";
 export { default as ForgotPasswordPage } from "./ForgotPasswordPage";
 export { default as ResetPasswordPage } from "./ResetPasswordPage";
+export { default as VerifyEmailPage } from "./VerifyEmailPage";

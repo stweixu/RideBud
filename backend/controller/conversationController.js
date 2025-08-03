@@ -63,10 +63,10 @@ const getUserConversations = async (req, res) => {
     })
       .populate({
         path: "participants",
-        select: "displayName avatar", // adjust to your User fields
+        select: "displayName avatar",
       })
       .populate({
-        path: "carpoolRideId", // This populates the CarpoolRide object
+        path: "carpoolRideId", // populate the CarpoolRide object
         select:
           "carpoolDate carpoolStartTime carpoolPickupLocation carpoolDropoffLocation",
       })
@@ -95,13 +95,12 @@ const getUserConversations = async (req, res) => {
         if (conv.carpoolRideId) {
           // Ensure a carpool ride is linked
           userJourneyDetails = await UserJourney.findOne({
-            userId: new mongoose.Types.ObjectId(userId), // The logged-in user
-            matchedRideId: conv.carpoolRideId._id, // The carpool ride associated with this conversation
+            userId: new mongoose.Types.ObjectId(userId),
+            matchedRideId: conv.carpoolRideId._id,
           })
-            .select("journeyOrigin journeyDestination") // Select only the fields you need
+            .select("journeyOrigin journeyDestination")
             .lean();
         }
-        // --- END NEW LOGIC ---
 
         return {
           ...conv,
@@ -155,7 +154,6 @@ const getConversationByConversationId = async (req, res) => {
       (p) => p._id.toString() !== userId
     );
 
-    // --- NEW LOGIC: Fetch UserJourney for the current user for this specific carpool ride ---
     let userJourneyDetails = null;
     if (conversation.carpoolRideId) {
       userJourneyDetails = await UserJourney.findOne({
@@ -165,14 +163,13 @@ const getConversationByConversationId = async (req, res) => {
         .select("journeyOrigin journeyDestination")
         .lean();
     }
-    // --- END NEW LOGIC ---
 
     // Get all messages for the conversation, sorted oldest to newest
     const messages = await Message.find({ conversationId })
       .sort({ createdAt: 1 })
       .lean();
 
-    // Mark unread messages for this user as read (optional)
+    // Mark unread messages for this user as read
     await Message.updateMany(
       {
         conversationId,
@@ -261,19 +258,15 @@ const deleteConversation = async (req, res) => {
     const result = await Conversation.findByIdAndDelete(conversationId);
 
     if (!result) {
-      return res
-        .status(404)
-        .json({
-          message: "Conversation not found after messages deleted (unlikely)",
-        });
+      return res.status(404).json({
+        message: "Conversation not found after messages deleted (unlikely)",
+      });
     }
 
-    res
-      .status(200)
-      .json({
-        message: "Conversation and associated messages deleted successfully",
-        conversationId,
-      });
+    res.status(200).json({
+      message: "Conversation and associated messages deleted successfully",
+      conversationId,
+    });
   } catch (error) {
     console.error("Error deleting conversation:", error);
     res
@@ -284,7 +277,7 @@ const deleteConversation = async (req, res) => {
 
 // NEW: Get total unread message count for the current user
 const getUnreadCountByUserId = async (req, res) => {
-  const userId = req.user.userId; // Assuming userId is available from authentication middleware
+  const userId = req.user.userId;
 
   if (!userId) {
     return res.status(400).json({ error: "User ID is required" });
@@ -292,8 +285,8 @@ const getUnreadCountByUserId = async (req, res) => {
 
   try {
     const totalUnreadCount = await Message.countDocuments({
-      receiverId: new mongoose.Types.ObjectId(userId), // Messages received by this user
-      isRead: false, // That are not yet read
+      receiverId: new mongoose.Types.ObjectId(userId),
+      isRead: false,
     });
 
     res.status(200).json({ totalUnreadCount });
@@ -323,5 +316,5 @@ module.exports = {
   getUnreadCount,
   getConversationByConversationId,
   deleteConversation,
-  getUnreadCountByUserId, // <-- Export the new function
+  getUnreadCountByUserId,
 };

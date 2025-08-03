@@ -22,7 +22,6 @@ const journeyStepSchema = new mongoose.Schema(
       lat: { type: Number, required: false },
       lng: { type: Number, required: false },
     },
-    // Also, if you want to store the ID for the *matched carpool ride* within its specific step:
     matchedRideId: {
       // This field would only be present for the 'carpool' type step
       type: mongoose.Schema.Types.ObjectId,
@@ -46,7 +45,7 @@ const journeyNavigationSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ["fastest-carpool", "balanced-carpool", "other-types"], // expand as needed
+      enum: ["fastest-carpool", "balanced-carpool", "other-types"],
     },
     name: { type: String, required: true },
     totalTime: { type: String, required: true },

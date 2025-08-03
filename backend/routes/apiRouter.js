@@ -19,9 +19,9 @@ const userJourneyRouter = require("./user-journey/userJourneyRouter");
 const carpoolRideRouter = require("./user-journey/carpoolRideRouter");
 const recommendedJourneyRouter = require("./user-journey/recommendedJourneyRouter");
 const marketplaceRideRouter = require("./marketplace-ride/marketplaceRideRouter");
-const chatRouter = require("./chatRouter"); // Import chat routes
-const forgotPasswordRouter = require("./forgotPasswordRouter"); // Import reset password routes
-const googleLoginRouter = require("./account-creation/googleLogin"); // Import Google login routes
+const chatRouter = require("./chatRouter");
+const forgotPasswordRouter = require("./forgotPasswordRouter");
+const googleLoginRouter = require("./account-creation/googleLogin");
 
 // Define the routeMap object to map paths to routers
 const routeMap = {

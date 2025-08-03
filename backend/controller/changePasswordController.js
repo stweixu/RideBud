@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 
 const changePasswordController = async (req, res) => {
   const { oldPassword, newPassword } = req.body;
-  const userId = req.user.userId; // Assuming user ID is available in req.user
+  const userId = req.user.userId; // get userId from authenticated token after middleware validation
 
   try {
     // Find the user by ID

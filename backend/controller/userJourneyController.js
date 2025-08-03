@@ -210,7 +210,7 @@ const getUpcomingJourney = async (req, res) => {
       });
     }
 
-    // Update status just in case (optional but recommended)
+    // Update status just in case
     await updateJourneyStatusBasedOnRide(upcomingJourney);
 
     // Enrich with ride info and rideBuddy details
@@ -455,7 +455,6 @@ const updateUserJourneyFields = async (req, res) => {
       }
     }
 
-    // --- ADDED LOGIC FOR GEOCODING ---
     // Only re-geocode if origin or destination addresses have changed
     if (coordsChanged) {
       try {
@@ -468,17 +467,14 @@ const updateUserJourneyFields = async (req, res) => {
         console.log("Journey coordinates re-geocoded successfully.");
       } catch (geocodeError) {
         console.error("Geocoding failed during journey update:", geocodeError);
-        // You might want to return an error to the client here,
-        // or set a specific status/message on the journey
         return res.status(400).json({
           message:
             "Failed to geocode new address. Please check the address format.",
         });
       }
     }
-    // --- END ADDED LOGIC ---
 
-    await journey.save(); // Save the updated journey, including new coordinates if geocoded
+    await journey.save();
 
     res.status(200).json({
       message: "User journey updated successfully.",
@@ -494,9 +490,9 @@ const updateUserJourneyFields = async (req, res) => {
 const deleteUserJourney = async (req, res) => {
   try {
     // Define userJourneyId from req.params at the start
-    const userJourneyId = req.params.userJourneyId; // <-- ADD THIS LINE
+    const userJourneyId = req.params.userJourneyId;
 
-    const journey = await UserJourney.findById(userJourneyId); // Use the defined variable
+    const journey = await UserJourney.findById(userJourneyId);
     if (!journey) return res.status(404).json({ message: "Not found." });
 
     if (journey.userId.toString() !== req.user.userId) {
@@ -509,7 +505,7 @@ const deleteUserJourney = async (req, res) => {
         // Remove the current user's ID from the riderIds array
         ride.riderIds = ride.riderIds.filter(
           (id) => id.toString() !== req.user.userId
-        ); // --- NEW LOGIC: Check if CarpoolRide becomes empty after rider removal ---
+        );
 
         if (ride.riderIds.length === 0) {
           // If no riders left, delete the CarpoolRide
@@ -524,11 +520,10 @@ const deleteUserJourney = async (req, res) => {
       }
     }
 
-    await UserJourney.deleteOne({ _id: userJourneyId }); // Use the defined variable
+    await UserJourney.deleteOne({ _id: userJourneyId });
 
     // Delete associated JourneyNavigation AFTER UserJourney is successfully deleted
-    // And ensure this logic is before the final response,
-    // or handle it in a way that doesn't conflict with headers.
+
     if (journey.journeyNavigation) {
       // Check if the UserJourney has a linked JourneyNavigation
       await JourneyNavigation.deleteOne({ _id: journey.journeyNavigation });
@@ -538,11 +533,9 @@ const deleteUserJourney = async (req, res) => {
       await JourneyNavigation.deleteOne({ userJourneyId: userJourneyId }); // Now userJourneyId is defined!
     }
 
-    // Send the response ONLY once all operations are complete
     res.status(200).json({ message: "Deleted journey successfully." });
   } catch (err) {
     console.error("Delete journey error:", err);
-    // Ensure headers are not already sent before sending an error response
     if (!res.headersSent) {
       res.status(500).json({ message: "Error deleting journey." });
     }

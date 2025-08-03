@@ -328,7 +328,7 @@ export default function RegistrationPage() {
                       initialFocus
                       captionLayout="dropdown"
                       fromYear={1900}
-                      toYear={new Date().getFullYear() - 17}
+                      toYear={new Date().getFullYear()}
                     />
                   </PopoverContent>
                 </Popover>

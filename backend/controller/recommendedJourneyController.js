@@ -20,7 +20,7 @@ const parseDurationToMinutes = (durationString) => {
   return hours * 60 + minutes;
 };
 
-// ADDED: Helper to parse distance text into kilometers (copied from RideMatchingController)
+// Helper to parse distance text into kilometers (copied from RideMatchingController)
 const parseDistanceToKm = (distanceText) => {
   if (!distanceText) return 0;
 
@@ -150,8 +150,6 @@ const getStepTypeAndIconHint = (step, mode) => {
  * Helper function to normalize location objects to { lat: number, lng: number } format.
  * Handles Google Maps LatLng objects (with .lat()/.lng() methods),
  * LatLngLiteral objects ({lat, lng}), and GeoJSON Point objects ([longitude, latitude]).
- * @param {object | null | undefined} location - The raw location object.
- * @returns {object | null} An object with { lat, lng } properties, or null if invalid.
  */
 const getLatLngFromLocation = (location) => {
   if (!location) return null;
@@ -185,7 +183,7 @@ const getLatLngFromLocation = (location) => {
   }
 
   // Case 3: If it's a Google Maps LatLng object (has methods), extract values
-  // This might occur if you are passing the raw Google Maps object around.
+  // might occur if passing the raw Google Maps object around.
   if (
     typeof location.lat === "function" &&
     typeof location.lng === "function"
@@ -222,7 +220,7 @@ const processSteps = (
   isLastSegment = false,
   overallJourneyDestination = null,
   balancedRide = null,
-  journeyPreferredDateTime // ADDED: Pass this parameter for cost calculation
+  journeyPreferredDateTime
 ) => {
   if (data.status !== "OK" || data.routes.length === 0) {
     // console.warn("Google Maps Directions API returned no results for a segment:", data.status);
@@ -232,14 +230,13 @@ const processSteps = (
   const segmentLeg = data.routes[0].legs[0];
   const processedSteps = [];
 
-  // We'll track the last known precise end address to use as the next step's start address.
+  // Track the last known precise end address to use as the next step's start address.
   // Initialize with the segment's start address and standardized location for the first step.
   let currentGeoAddress = segmentLeg.start_address;
   let currentGeoLocation = getLatLngFromLocation(segmentLeg.start_location);
 
   for (let index = 0; index < segmentLeg.steps.length; index++) {
     const step = segmentLeg.steps[index];
-    // getStepTypeAndIconHint now also returns calculatorType
     const { type, iconHint, calculatorType } = getStepTypeAndIconHint(
       step,
       step.travel_mode // Use step.travel_mode for sub-steps

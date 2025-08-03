@@ -1,7 +1,7 @@
 //services/googleStrategy.js
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const User = require("../models/User"); // Your mongoose User model
+const User = require("../models/User");
 
 passport.use(
   new GoogleStrategy(
@@ -39,7 +39,7 @@ passport.use(
             email,
             displayName: profile.displayName,
             avatar: profile.photos[0]?.value || undefined,
-            dateOfBirth: null, // can prompt user later to add if needed
+            dateOfBirth: null,
           });
 
           await newUser.save();

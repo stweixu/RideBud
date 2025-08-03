@@ -3,7 +3,7 @@
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const { transporter } = require("../utility/email");
-const crypto = require("crypto"); // Import crypto module
+const crypto = require("crypto");
 
 const sendResetLink = async (req, res) => {
   const { email } = req.body;
@@ -11,7 +11,6 @@ const sendResetLink = async (req, res) => {
   try {
     const user = await User.findOne({ email });
 
-    // CRITICAL SECURITY CHANGE: Prevent User Enumeration
     // Always return a generic success message, regardless of whether the email was found.
     if (!user) {
       return res.status(200).json({
@@ -24,19 +23,18 @@ const sendResetLink = async (req, res) => {
     const resetToken = crypto.randomBytes(32).toString("hex"); // 32 bytes = 64 hex chars
     const hashedResetToken = await bcrypt.hash(resetToken, 10); // Hash it for storage
 
-    // 2. Set expiry (e.g., 1 hour from now)
+    // 2. Set expiry
     const resetTokenExpires = Date.now() + 3600000; // 1 hour in milliseconds
 
     // 3. Save the HASHED token and expiry to the user document
     user.resetPasswordToken = hashedResetToken;
     user.resetPasswordExpires = resetTokenExpires;
-    await user.save(); // Save the updated user
+    await user.save();
 
     // 4. Construct the reset link using the UNHASHED token for the email
-    // IMPORTANT: Make sure this points to your FRONTEND reset password page
     const frontendBaseUrl =
-      process.env.FRONTEND_BASE_URL || "http://localhost:5173"; // Use env var for production
-    const resetLink = `${frontendBaseUrl}/reset-password?token=${resetToken}&email=${email}`; // Include email for convenience if needed
+      process.env.FRONTEND_BASE_URL || "http://localhost:5173"; // env var for production
+    const resetLink = `${frontendBaseUrl}/reset-password?token=${resetToken}&email=${email}`;
 
     // 5. Send the email with the UNHASHED token
     await transporter.sendMail({
@@ -51,7 +49,7 @@ const sendResetLink = async (req, res) => {
         "If an account with that email exists, a password reset link has been sent to it.",
     });
   } catch (err) {
-    console.error("Error sending reset link:", err); // Log more specific error
+    console.error("Error sending reset link:", err);
     return res.status(500).json({
       message:
         "Could not send reset link at this time. Please try again later.",
@@ -60,13 +58,12 @@ const sendResetLink = async (req, res) => {
 };
 
 const resetPassword = async (req, res) => {
-  const { token, email, newPassword } = req.body; // Expect email as well, though it can also be derived from JWT if you use JWT for the token
+  const { token, email, newPassword } = req.body;
 
   try {
-    // 1. Find the user by email (from the request body or from decoded JWT if token was a JWT)
+    // 1. Find the user by email
     const user = await User.findOne({ email });
 
-    // Handle user not found (or potentially tampered email)
     if (!user) {
       return res
         .status(400)
@@ -74,7 +71,7 @@ const resetPassword = async (req, res) => {
     }
 
     // 2. Verify the stored token and its expiry
-    // Compare the raw token from the request with the hashed token in the DB
+    // Compare the raw token from the request with the hashed token in DB
     const isMatch = await bcrypt.compare(token, user.resetPasswordToken);
 
     if (!isMatch || user.resetPasswordExpires < Date.now()) {
@@ -87,20 +84,20 @@ const resetPassword = async (req, res) => {
       });
     }
 
-    // 3. Hash the new password
+    // 3. Hash new password
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
-    // 4. Update the user's password
+    // 4. Update user's password
     user.password = hashedNewPassword;
 
-    // 5. CRITICAL SECURITY STEP: Invalidate the token by clearing the fields
+    // 5. SECURITY STEP: Invalidate the token by clearing the fields
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
-    await user.save(); // Save the user with the new password and cleared token fields
+    await user.save();
 
     res.status(200).json({ message: "Password reset successfully." });
   } catch (err) {
-    console.error("Error resetting password:", err); // Log more specific error
+    console.error("Error resetting password:", err);
     // Distinguish specific errors if you want to provide more details,
     // e.g., password too short (if you add validation here).
     res.status(500).json({ message: "Server error during password reset." });

@@ -1,11 +1,3 @@
-// Change 'require' to dynamic 'import' for node-fetch
-// This is necessary because node-fetch v3+ is an ES Module (ESM)
-// and cannot be directly 'require()'d in a CommonJS context.
-// We will import it inside the functions that use it.
-
-// IMPORTANT: Ensure your Google Maps API Key is in your .env file
-// and loaded via dotenv in your main server file (e.g., server.js or app.js)
-
 //controller/directionsController.js
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
@@ -21,7 +13,6 @@ if (!GOOGLE_MAPS_API_KEY) {
  * Returns an array of journey options (Fastest, Balanced).
  */
 const getJourneyRecommendations = async (req, res) => {
-  // Dynamically import node-fetch inside the async function
   const { default: fetch } = await import("node-fetch");
 
   if (!GOOGLE_MAPS_API_KEY) {
@@ -80,7 +71,7 @@ const getJourneyRecommendations = async (req, res) => {
         )
           return { type: "train", iconHint: "Train" };
       }
-      return { type: "public_transport", iconHint: "Bus" }; // Generic public transport
+      return { type: "public_transport", iconHint: "Bus" };
     }
     if (mode === "WALKING") {
       return { type: "walking", iconHint: "FootprintsIcon" };
@@ -118,7 +109,7 @@ const getJourneyRecommendations = async (req, res) => {
         id: "fastest-carpool",
         name: "Fastest (Carpool)",
         totalTime: leg.duration.text,
-        totalCost: "$16.00", // Example cost
+        totalCost: "$16.00", // Example cost for carpool
         eta: calculateETA(leg.duration.text),
         totalDistance: leg.distance.text,
         steps: drivingSteps,
