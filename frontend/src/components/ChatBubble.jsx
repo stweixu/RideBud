@@ -10,10 +10,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Send, X, ChevronLeft } from "lucide-react"; // Import ChevronLeft
+import { Send, X, ChevronLeft } from "lucide-react"; 
 import { useAuth } from "@/contexts/authContext";
 import socket from "@/utils/socket";
-import { cn } from "@/lib/utils"; // Make sure you have cn from shadcn/ui utils
+import { cn } from "@/lib/utils"; 
 
 const ChatBubble = ({
   inline = false,
@@ -29,7 +29,7 @@ const ChatBubble = ({
   rideOrigin,
   rideDestination,
   conversationId,
-  onBack, // <-- ACCEPT onBack PROP
+  onBack,
 }) => {
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef(null);

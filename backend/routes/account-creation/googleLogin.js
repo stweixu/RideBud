@@ -25,7 +25,7 @@ router.get(
       path: "/",
     });
     // Successful login, redirect frontend or send JSON
-    res.redirect(`${frontendBaseUrl}/`); // change to your frontend URL
+    res.redirect(`${frontendBaseUrl}/`);
   }
 );
 

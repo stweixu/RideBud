@@ -37,6 +37,6 @@ router.delete(
 ); // <-- Corrected this line
 
 // NEW: Route to get total unread message count for the logged-in user
-router.get("/conversations/unread-total", verifyToken, getUnreadCountByUserId); // <-- Added this new route
+router.get("/conversations/unread-total", verifyToken, getUnreadCountByUserId);
 
 module.exports = router;

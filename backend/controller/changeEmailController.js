@@ -1,11 +1,11 @@
 const User = require("../models/User");
-const PendingEmailChange = require("../models/PendingEmailChange"); // New model
+const PendingEmailChange = require("../models/PendingEmailChange");
 const { transporter } = require("../utility/email");
 const jwt = require("jsonwebtoken");
 
 const changeEmailController = async (req, res) => {
   const { newEmail } = req.body;
-  const userId = req.user.userId; // Correctly get userId from authenticated token
+  const userId = req.user.userId; // get userId from authenticated token
 
   try {
     // 1. Find the current user to ensure they exist
@@ -41,7 +41,6 @@ const changeEmailController = async (req, res) => {
     );
 
     // 5. Store the pending email change request
-    // Use upsert to update if a pending change for this user/newEmail already exists
     await PendingEmailChange.updateOne(
       { userId: user._id }, // Find by userId
       {

@@ -1,5 +1,5 @@
 // controllers/carpoolRideController.js
-const { default: fetch } = require("node-fetch"); // Ensure node-fetch is installed
+const { default: fetch } = require("node-fetch");
 const CarpoolRide = require("../models/CarpoolRide");
 const User = require("../models/User");
 const UserJourney = require("../models/UserJourney");
@@ -12,15 +12,13 @@ if (!Maps_API_KEY) {
   );
 }
 
-// Helper: dynamically import node-fetch and geocode an address
-// Note: Changed to use the 'fetch' imported above, no need for dynamic import inside helper
+// geocode an address
 // Helper to get concise place name from input address using Places Autocomplete + Place Details
 const getPlaceName = async (input) => {
   if (!Maps_API_KEY) {
     throw new Error("Google Maps API key missing");
   }
 
-  // 1. Places Autocomplete API call
   const autocompleteUrl = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
     input
   )}&key=${Maps_API_KEY}&types=establishment|geocode`;
@@ -50,7 +48,7 @@ const getPlaceName = async (input) => {
   return detailsData.result.name;
 };
 
-// Your existing geocode helper, unchanged
+// Geocode an address to get coordinates in GeoJSON format, used to store the actual coordinates in MongoDB
 const geocodeAddress = async (address) => {
   if (!Maps_API_KEY) {
     throw new Error("Google Maps API key is missing in environment.");
@@ -187,8 +185,7 @@ const createCarpoolRide = async (req, res) => {
 };
 
 /**
- * Helper function to enrich a single CarpoolRide with rideBuddy info.
- * This is now a standalone helper.
+ * Enrich a single CarpoolRide with rideBuddy info.
  */
 const enrichCarpoolRideWithBuddyInfo = async (carpoolRide) => {
   let rideBuddy = null;
@@ -218,31 +215,21 @@ const enrichCarpoolRideWithBuddyInfo = async (carpoolRide) => {
 };
 
 /**
- * Fetches details for a specific carpool ride by its ID.
- * This function now queries the database for the CarpoolRide and its associated UserJourney.
+ * Fetches details for a specific carpool ride by its ID, fetching CarpoolRide and its associated UserJourney.
  */
 const getCarpoolRideDetailsByRideId = async (req, res) => {
   const { rideId } = req.params;
 
   try {
-    // Find the CarpoolRide by its ID
     const carpoolRide = await CarpoolRide.findById(rideId);
 
     if (!carpoolRide) {
       return res.status(404).json({ message: "Carpool Ride not found." });
     }
 
-    // NEW: Enrich the carpool ride with rideBuddy info
     const enrichedCarpoolRide = await enrichCarpoolRideWithBuddyInfo(
       carpoolRide
     );
-
-    // primaryJourneyId was removed from CarpoolRide model.
-    // If you still need journeyOrigin/Destination for this specific endpoint,
-    // you would need to fetch the UserJourney that *references* this CarpoolRide
-    // via its 'matchedRideId' field. This is more complex and usually handled
-    // by the UserJourney controller or frontend logic.
-    // For now, we'll assume the frontend's 'MarketplaceRideList' will get overall journey context from UserJourney.
 
     // Combine carpool ride details with relevant user journey details for the frontend
     res.status(200).json({
@@ -259,12 +246,10 @@ const getCarpoolRideDetailsByRideId = async (req, res) => {
         riderIds: enrichedCarpoolRide.riderIds,
         status: enrichedCarpoolRide.status,
         estimatedPrice: enrichedCarpoolRide.estimatedPrice,
-        // --- INCLUDE NEW FIELDS HERE ---
         carpoolDurationText: enrichedCarpoolRide.carpoolDurationText,
         carpoolDistanceText: enrichedCarpoolRide.carpoolDistanceText,
-        // --- END NEW FIELDS ---
-        rideBuddy: enrichedCarpoolRide.rideBuddy, // NEW: Include rideBuddy
-        createdAt: enrichedCarpoolRide.createdAt, // Include timestamps if useful for frontend
+        rideBuddy: enrichedCarpoolRide.rideBuddy,
+        createdAt: enrichedCarpoolRide.createdAt,
         updatedAt: enrichedCarpoolRide.updatedAt,
         passengersCount: enrichedCarpoolRide.passengersCount,
       },
@@ -315,21 +300,13 @@ const getCarpoolRidesByUserId = async (req, res) => {
   }
 };
 
-// For example, a simple endpoint to get all carpool rides (for MarketplaceRideList)
 const getAllCarpoolRides = async (req, res) => {
   try {
-    const carpoolRides = await CarpoolRide.find({}); // Fetch all carpool rides
-    // In a real app, you might want to paginate, filter, or sort these.
+    const carpoolRides = await CarpoolRide.find({}); // Fetch all carpool rides without paginate, filter, or sort
 
-    // NEW: Enrich each carpool ride with rideBuddy info
     const enrichedRides = await Promise.all(
       carpoolRides.map((ride) => enrichCarpoolRideWithBuddyInfo(ride))
     );
-
-    // primaryJourneyId was removed from CarpoolRide model.
-    // The previous logic to populate journeyOrigin/Destination from primaryJourneyId
-    // is no longer applicable here. The frontend's MarketplaceRideList should display
-    // carpool-specific origin/destination.
 
     res.status(200).json({ carpoolRides: enrichedRides });
   } catch (error) {

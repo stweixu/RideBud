@@ -2,12 +2,12 @@
 
 const express = require("express");
 const router = express.Router();
-const { verifyToken } = require("../../middleware/authMiddleware"); // Import the authentication middleware
+const { verifyToken } = require("../../middleware/authMiddleware");
 const {
   changePasswordController,
 } = require("../../controller/changePasswordController");
 const validate = require("../../middleware/validate");
-const validatePasswordChange = require("../../validator/validatePasswordChange"); // Import validation rules
+const validatePasswordChange = require("../../validator/validatePasswordChange");
 
 router.patch(
   "/",

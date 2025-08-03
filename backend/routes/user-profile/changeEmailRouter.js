@@ -3,12 +3,12 @@ const router = express.Router();
 const { verifyToken } = require("../../middleware/authMiddleware");
 const {
   changeEmailController,
-} = require("../../controller/changeEmailController"); // New controller
+} = require("../../controller/changeEmailController");
 const validate = require("../../middleware/validate");
-const validateEmailChange = require("../../validator/validateEmailChange"); // New validator
+const validateEmailChange = require("../../validator/validateEmailChange");
 
 router.patch(
-  "/", // This will be mounted under /api/change-email
+  "/", // mounted under /api/change-email
   verifyToken,
   validate(validateEmailChange),
   changeEmailController

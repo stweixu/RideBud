@@ -4,7 +4,7 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
-const socketHandler = require("./socketHandler"); // <-- import the socket module
+const socketHandler = require("./socketHandler");
 const passport = require("passport");
 const session = require("express-session");
 require("./services/googleStrategy");
@@ -49,7 +49,7 @@ app.use(cookieParser());
 
 app.use("/api", require("./routes/apiRouter"));
 
-// Pass the io instance to your socket handler
+// Pass the io instance to socket handler
 socketHandler(io);
 
 const PORT = process.env.PORT || 5000;

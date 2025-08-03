@@ -2,11 +2,7 @@
 
 const CarpoolRide = require("../models/CarpoolRide");
 const UserJourney = require("../models/UserJourney");
-const { calculateTransportCost } = require("../utility/transportCalculator"); // ADDED: Import the utility
-
-// No need for fetch or Maps_API_KEY imports here anymore,
-// as the duration/distance fetching logic is now in carpoolRideController.js
-// and recommendationsController.js for transit legs.
+const { calculateTransportCost } = require("../utility/transportCalculator");
 
 const MAX_DISTANCE_METERS = 1500;
 const TIME_WINDOW_MINUTES = 60;
@@ -40,11 +36,8 @@ const isNearby = (coord1, coord2) =>
 
 /**
  * Helper to parse distance text (e.g., "1.5 km", "500 m") into kilometers.
- * @param {string} distanceText - The distance string.
- * @returns {number} Distance in kilometers.
  */
 const parseDistanceToKm = (distanceText) => {
-  // ADDED: New helper function
   if (!distanceText) return 0;
 
   const matchKm = distanceText.match(/(\d+(\.\d+)?)\s*km/i);
@@ -209,17 +202,13 @@ const findBalancedRide = async (userJourney) => {
 
   const bestRide = ranked.length > 0 ? ranked[0].ride : null;
 
-  // REMOVED: No more Google Maps API call here.
-  // The 'bestRide' should already have carpoolDurationText and carpoolDistanceText
-  // because they are saved when the CarpoolRide is created.
-
   if (bestRide) {
     console.log(">>> Selected best ride:", bestRide._id);
 
     // Convert Mongoose document to plain object before adding new properties
-    const bestRideObject = bestRide.toObject(); // ADDED: Convert to plain object
+    const bestRideObject = bestRide.toObject();
 
-    // Calculate estimated price for the carpool ride // ADDED: Price calculation logic
+    // Calculate estimated price for the carpool ride
     const carpoolDistanceKm = parseDistanceToKm(
       bestRideObject.carpoolDistanceText
     );
@@ -237,19 +226,14 @@ const findBalancedRide = async (userJourney) => {
     // and no specific airport surcharge applies unless explicitly indicated in the ride itself
     const estimatedPrice = calculateTransportCost("taxi", carpoolDistanceKm, {
       time: journeyHour,
-      isAirport: false, // Default to false, can be made dynamic if your CarpoolRide model stores this
+      isAirport: false, // Default to false, need further logic if airport rides are to be handled
     });
 
-    bestRideObject.estimatedPrice = estimatedPrice; // ADDED: Attach estimatedPrice
-    console.log(
-      `Estimated price for carpool ride ${
-        bestRide._id
-      }: S$${estimatedPrice.toFixed(2)}`
-    ); // ADDED: Log price
+    bestRideObject.estimatedPrice = estimatedPrice;
 
     bestRideObject.passengersCount = bestRide.passengersCount;
 
-    return bestRideObject; // Return the plain object with estimatedPrice
+    return bestRideObject;
   } else {
     return null;
   }

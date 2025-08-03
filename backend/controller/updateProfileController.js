@@ -1,16 +1,10 @@
-const User = require("../models/User"); // Assuming your User model path
-// Removed express-validator imports here, as validation will be handled by a separate middleware
+const User = require("../models/User");
 
 const updateProfileController = async (req, res) => {
-  // The validationResult(req) check is now handled by the 'validate' middleware
-  // that will run BEFORE this controller.
-  // If execution reaches this controller, it means validation has passed.
-
   try {
-    // req.user.userId should be populated by your authentication middleware
+    // req.user.userId populated by authentication middleware
     const userId = req.user.userId;
 
-    // Extract allowed fields from the request body
     const { displayName, bio, avatar } = req.body;
 
     const updateFields = {};
@@ -28,7 +22,7 @@ const updateProfileController = async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { $set: updateFields },
-      { new: true, runValidators: true } // runValidators ensures Mongoose schema validators run on update
+      { new: true, runValidators: true }
     ).select("-password -__v"); // Exclude sensitive fields from the response
 
     if (!updatedUser) {
@@ -44,5 +38,4 @@ const updateProfileController = async (req, res) => {
   }
 };
 
-// We no longer export validateProfileUpdate from here, as it will be in its own file.
 module.exports = { updateProfileController };

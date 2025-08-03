@@ -61,7 +61,6 @@ const rideSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    // --- ADD THESE NEW FIELDS ---
     carpoolDurationText: {
       type: String,
       required: false,
@@ -75,14 +74,13 @@ const rideSchema = new mongoose.Schema(
       default: 1,
       min: 1,
     },
-    // --- END NEW FIELDS ---
   },
   {
     timestamps: true,
   }
 );
 
-// Add geospatial indexes for location queries
+// Geospatial indexes for location queries
 rideSchema.index({ carpoolPickupCoords: "2dsphere" });
 rideSchema.index({ carpoolDropoffCoords: "2dsphere" });
 
