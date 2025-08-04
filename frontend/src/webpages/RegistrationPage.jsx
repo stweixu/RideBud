@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { User, Mail, Lock, Eye, EyeOff, Calendar } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
-import LogoBar from "@/components/logoBar";
+import LogoBar from "@/components/LogoBar";
 import BrandFooter from "@/components/BrandFooter";
 import {
   Popover,
