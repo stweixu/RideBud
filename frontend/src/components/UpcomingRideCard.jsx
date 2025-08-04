@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 // import ChatBubble from "@/components/ChatBubble"; // No longer directly imported here
-// import { useAuth } from "@/contexts/authContext"; // No longer directly imported here
+// import { useAuth } from "@/contexts/AuthContext"; // No longer directly imported here
 
 // Import the new reusable chat button component
 import OpenChatDialogButton from "@/components/OpenChatDialogButton";
