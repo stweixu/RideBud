@@ -1,4 +1,4 @@
-// controllers/RideMatchingController.js
+// controllers/rideMatchingController.js
 
 const CarpoolRide = require("../models/CarpoolRide");
 const UserJourney = require("../models/UserJourney");

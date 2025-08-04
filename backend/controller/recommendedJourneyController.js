@@ -1,6 +1,6 @@
 // controllers/recommendationsController.js
 const UserJourney = require("../models/UserJourney");
-const { findBalancedRide } = require("./RideMatchingController");
+const { findBalancedRide } = require("./rideMatchingController");
 const { calculateTransportCost } = require("../utility/transportCalculator");
 
 const Maps_API_KEY = process.env.GOOGLE_MAPS_API_KEY;

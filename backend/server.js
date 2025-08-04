@@ -7,6 +7,7 @@ const connectDB = require("./config/db");
 const socketHandler = require("./socketHandler");
 const passport = require("passport");
 const session = require("express-session");
+const MongoStore = require("connect-mongo");
 require("./services/googleStrategy");
 
 const app = express();
@@ -28,6 +29,10 @@ app.use(
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_ONLINE_URI,
+      collectionName: "sessions",
+    }),
     cookie: {
       secure: process.env.NODE_ENV === "production", // true in prod if HTTPS
       maxAge: 24 * 60 * 60 * 1000, // 1 day
