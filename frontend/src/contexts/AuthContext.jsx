@@ -1,4 +1,5 @@
 // src/contexts/AuthContext.js
+//bugfixed
 import { createContext, useContext } from "react";
 
 // Create an AuthContext
