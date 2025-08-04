@@ -159,10 +159,10 @@ export default function RegistrationPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center mb-12">
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center">
       <LogoBar />
 
-      <div className="max-w-sm w-full">
+      <div className="max-w-sm w-full flex-grow">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-semibold text-gray-700">
             Create your account
@@ -360,16 +360,21 @@ export default function RegistrationPage() {
                 />
                 <Label htmlFor="terms" className="text-xs text-gray-600">
                   I agree to the{" "}
-                  <Link to="/terms" className="text-green-600 hover:underline">
+                  <span
+                    onClick={(e) => e.preventDefault()}
+                    className="text-green-600 cursor-not-allowed underline"
+                    title="Coming soon"
+                  >
                     Terms and Conditions
-                  </Link>{" "}
+                  </span>{" "}
                   and{" "}
-                  <Link
-                    to="/privacy"
-                    className="text-green-600 hover:underline"
+                  <span
+                    onClick={(e) => e.preventDefault()}
+                    className="text-green-600 cursor-not-allowed underline"
+                    title="Coming soon"
                   >
                     Privacy Policy
-                  </Link>
+                  </span>
                 </Label>
               </div>
               {validationErrors.agreeToTerms && (

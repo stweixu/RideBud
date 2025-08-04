@@ -41,6 +41,7 @@ const selectJourney = async (req, res) => {
       matchedRideId: matchedCarpoolRideId,
     };
 
+    console.log(selectedJourney.steps);
     const query = {
       userJourneyId: userJourneyId,
       type: selectedJourney.type, // Use type from the selectedJourney object

@@ -1,3 +1,5 @@
+// src/components/RecommendedJourneys.jsx
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -5,22 +7,19 @@ import { MapPin, Loader2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import JourneyTimeline from "@/components/JourneyTimeline"; // Import the new reusable component
-
-// Import the new reusable component
-import JourneyDetailsDisplay from "@/components/JourneyDetailsDisplay"; // Adjust path as needed
+import JourneyTimeline from "@/components/JourneyTimeline";
+import JourneyDetailsDisplay from "@/components/JourneyDetailsDisplay";
 
 const RecommendedJourneys = ({
   rideRoute = { origin: "Unknown Origin", destination: "Unknown Destination" },
   recommendedJourneys = [],
-  userJourneyId, // This is crucial for the select endpoint
+  userJourneyId,
   passengersCount,
 }) => {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth(); // Destructure isAuthenticated from useAuth
+  const { isAuthenticated } = useAuth();
 
   const [activeTab, setActiveTab] = useState("");
-
   const [isSelectingJourney, setIsSelectingJourney] = useState(false);
   const [selectionError, setSelectionError] = useState(null);
   const [selectionSuccess, setSelectionSuccess] = useState(null);
@@ -34,7 +33,6 @@ const RecommendedJourneys = ({
   const fastestStartTime = fastest?.carpoolStartTime;
 
   useEffect(() => {
-    // Initialize activeTab to fastest-carpool if present, else balanced-carpool if present
     if (!activeTab) {
       if (recommendedJourneys.find((j) => j.type === "fastest-carpool")) {
         setActiveTab("fastest-carpool");
@@ -52,10 +50,39 @@ const RecommendedJourneys = ({
     setSelectionSuccess(null);
 
     try {
+      // DEBUG: Log the full selected journey object to see its structure
+      console.log("Selected Journey:", selectedJourney);
+
       let carpoolRideIdToMatch = null;
 
       if (selectedJourney.type === "fastest-carpool") {
         const baseStartTime = new Date(fastestStartTime);
+
+        // Check if steps array exists and has elements
+        if (!selectedJourney.steps || selectedJourney.steps.length === 0) {
+          throw new Error(
+            "Journey steps are missing from the fastest carpool recommendation."
+          );
+        }
+
+        const firstStep = selectedJourney.steps[0];
+        const lastStep =
+          selectedJourney.steps[selectedJourney.steps.length - 1];
+
+        // Check for missing start/end location data
+        const pickupLocation = firstStep?.start_location;
+        const dropoffLocation = lastStep?.end_location;
+
+        if (!pickupLocation || !dropoffLocation) {
+          console.error(
+            "Missing start or end location coordinates in the selected journey's steps:",
+            { pickupLocation, dropoffLocation }
+          );
+          throw new Error(
+            "Missing start or end location coordinates in the selected journey."
+          );
+        }
+
         const carpoolRidePayload = {
           userJourneyId: userJourneyId,
           carpoolPickupLocation: rideRoute.origin,
@@ -66,10 +93,8 @@ const RecommendedJourneys = ({
           estimatedPrice: parseFloat(
             selectedJourney.carpoolRideCost.replace("$", "")
           ),
-          // Include actual coordinates for origin and destination if available in rideRoute
-          // You might need to adjust rideRoute or fetch these if not already present
-          carpoolPickupCoords: selectedJourney.steps[0]?.start_location || null,
-          carpoolDropoffCoords: selectedJourney.steps[0]?.end_location || null,
+          carpoolPickupCoords: selectedJourney.carpoolPickupCoords,
+          carpoolDropoffCoords: selectedJourney.carpoolDropoffCoords,
           passengersCount: passengersCount,
         };
 
@@ -84,10 +109,11 @@ const RecommendedJourneys = ({
         );
 
         const newCarpoolRideData = await createCarpoolResponse.json();
-        if (!createCarpoolResponse.ok)
+        if (!createCarpoolResponse.ok) {
           throw new Error(
             newCarpoolRideData.message || "Failed to create Carpool Ride."
           );
+        }
         carpoolRideIdToMatch = newCarpoolRideData.carpoolRide._id;
       } else if (selectedJourney.type === "balanced-carpool") {
         const balancedStep = selectedJourney.steps.find(
@@ -101,7 +127,6 @@ const RecommendedJourneys = ({
           );
         }
 
-        // For balanced, the actual "matching" with the user journey happens here:
         const updateJourneyResponse = await fetch(
           `${
             import.meta.env.VITE_API_BASE_URL
@@ -125,9 +150,7 @@ const RecommendedJourneys = ({
         throw new Error("Unsupported journey type for carpool ride creation.");
       }
 
-      // 2. Call the new '/user-journeys/select' endpoint to create journey navigation
       if (!userJourneyId) {
-        // selectedJourney._id is not needed here, as it's not a saved RecommendedJourney
         throw new Error("Missing userJourneyId for navigation creation.");
       }
 
@@ -139,9 +162,8 @@ const RecommendedJourneys = ({
           credentials: "include",
           body: JSON.stringify({
             userJourneyId: userJourneyId,
-            selectedJourney: selectedJourney, // <--- Send the whole object
-            matchedCarpoolRideId: carpoolRideIdToMatch, // Still useful if JourneyNavigation links to it
-            // You might or might not need selectedJourneyType explicitly if it's within selectedJourney
+            selectedJourney: selectedJourney,
+            matchedCarpoolRideId: carpoolRideIdToMatch,
           }),
         }
       );
@@ -223,9 +245,9 @@ const RecommendedJourneys = ({
                       journey={fastest}
                       rideRoute={rideRoute}
                       startTime={fastestStartTime}
-                      showSelectionButton={true} // Show button for recommended journeys
+                      showSelectionButton={true}
                       isSelectingJourney={isSelectingJourney}
-                      onSelectJourney={handleSelectJourney}
+                      onSelectJourney={() => handleSelectJourney(fastest)}
                       selectionError={selectionError}
                       selectionSuccess={selectionSuccess}
                       isAuthenticated={isAuthenticated}
@@ -251,9 +273,9 @@ const RecommendedJourneys = ({
                       journey={balanced}
                       rideRoute={rideRoute}
                       startTime={balancedStartTime}
-                      showSelectionButton={true} // Show button for recommended journeys
+                      showSelectionButton={true}
                       isSelectingJourney={isSelectingJourney}
-                      onSelectJourney={handleSelectJourney}
+                      onSelectJourney={() => handleSelectJourney(balanced)}
                       selectionError={selectionError}
                       selectionSuccess={selectionSuccess}
                       isAuthenticated={isAuthenticated}

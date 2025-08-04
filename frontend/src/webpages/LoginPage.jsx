@@ -9,6 +9,23 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/authContext"; // Import useAuth
 import LogoBar from "@/components/LogoBar";
 import BrandFooter from "@/components/BrandFooter";
+import { useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
+
+function Notification({ type, message }) {
+  const colors = {
+    success: "bg-green-100 text-green-800 border-green-400",
+    error: "bg-red-100 text-red-800 border-red-400",
+  };
+  return (
+    <div
+      className={`border px-4 py-2 rounded mb-4 text-sm ${colors[type] || ""}`}
+      role="alert"
+    >
+      {message}
+    </div>
+  );
+}
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -32,6 +49,23 @@ export default function LoginPage() {
     hasNumber: /\d/.test(formData.password),
     hasSymbol: /[~!@#$%^&]/.test(formData.password),
   };
+
+  const [searchParams] = useSearchParams();
+  const [notification, setNotification] = useState(null); // {type, message}
+
+  useEffect(() => {
+    if (searchParams.get("verified")) {
+      setNotification({
+        type: "success",
+        message: "Email verified successfully! Please log in.",
+      });
+    } else if (searchParams.get("error")) {
+      setNotification({
+        type: "error",
+        message: "Email verification failed or token expired.",
+      });
+    }
+  }, [searchParams]);
 
   const handleInputChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
@@ -118,6 +152,12 @@ export default function LoginPage() {
 
         <Card className="bg-white shadow-md ">
           <CardContent className="p-6">
+            {notification && (
+              <Notification
+                type={notification.type}
+                message={notification.message}
+              />
+            )}
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Email */}
               <div className="space-y-2">

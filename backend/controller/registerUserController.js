@@ -35,12 +35,12 @@ const registerUserController = async (req, res) => {
       { upsert: true }
     );
 
-    const verifyLink = `${process.env.FRONTEND_BASE_URL}/verify?token=${token}`;
+    const verifyLink = `${process.env.API_BASE_URL}/verify?token=${token}`;
 
     await transporter.sendMail({
       to: email,
       subject: "Verify your RideBud account",
-      text: `Click this link to verify your email: ${verifyLink}`,
+      html: `Hi ${displayName},<br><br>Click this link to verify your email: <a href="${verifyLink}">${verifyLink}</a>`,
     });
 
     return res.status(201).json({ message: "Email link sent successfully" });

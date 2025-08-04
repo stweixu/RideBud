@@ -30,7 +30,8 @@ const getPlaceName = async (input) => {
     autocompleteData.status !== "OK" ||
     !autocompleteData.predictions.length
   ) {
-    throw new Error(`Place autocomplete failed for input: ${input}`);
+    // Return the original input if place name cannot be found
+    return input;
   }
 
   const placeId = autocompleteData.predictions[0].place_id;
@@ -42,13 +43,15 @@ const getPlaceName = async (input) => {
   const detailsData = await detailsRes.json();
 
   if (detailsData.status !== "OK" || !detailsData.result.name) {
-    throw new Error(`Place details fetch failed for place_id: ${placeId}`);
+    // Return the original input if place name cannot be found
+    return input;
   }
 
   return detailsData.result.name;
 };
 
 // Geocode an address to get coordinates in GeoJSON format, used to store the actual coordinates in MongoDB
+// This function is no longer used in createCarpoolRide, but is kept for other potential uses
 const geocodeAddress = async (address) => {
   if (!Maps_API_KEY) {
     throw new Error("Google Maps API key is missing in environment.");
@@ -75,49 +78,49 @@ const geocodeAddress = async (address) => {
 const createCarpoolRide = async (req, res) => {
   const authenticatedUserId = req.user.userId;
 
-  const {
-    carpoolPickupLocation,
-    carpoolDropoffLocation,
-    carpoolStartTime,
-    carpoolDate,
-    status,
-    estimatedPrice,
-    userJourneyId,
-    passengersCount,
-  } = req.body;
+  const payload = req.body;
 
+  // Validate the required fields for the flattened GeoJSON payload
   if (
-    !carpoolPickupLocation ||
-    !carpoolDropoffLocation ||
-    !carpoolStartTime ||
-    !carpoolDate ||
-    !estimatedPrice
+    !payload.carpoolPickupLocation ||
+    !payload.carpoolDropoffLocation ||
+    !payload.carpoolPickupCoords ||
+    !payload.carpoolDropoffCoords ||
+    !Array.isArray(payload.carpoolPickupCoords.coordinates) ||
+    !Array.isArray(payload.carpoolDropoffCoords.coordinates) ||
+    typeof payload.carpoolPickupCoords.coordinates[0] !== "number" ||
+    typeof payload.carpoolPickupCoords.coordinates[1] !== "number" ||
+    typeof payload.carpoolDropoffCoords.coordinates[0] !== "number" ||
+    typeof payload.carpoolDropoffCoords.coordinates[1] !== "number" ||
+    !payload.carpoolStartTime ||
+    !payload.estimatedPrice ||
+    !payload.passengersCount
   ) {
-    return res
-      .status(400)
-      .json({ message: "Missing required fields for carpool ride creation." });
+    return res.status(400).json({
+      message:
+        "Missing or invalid required fields for carpool ride creation. Ensure coordinates are valid numbers and all fields are present.",
+    });
   }
 
+  const {
+    userJourneyId,
+    carpoolPickupLocation,
+    carpoolDropoffLocation,
+    carpoolPickupCoords,
+    carpoolDropoffCoords,
+    carpoolStartTime,
+    estimatedPrice,
+    passengersCount,
+  } = payload;
+
   try {
-    // Get short place names using Places API
-    const shortPickupName = await getPlaceName(carpoolPickupLocation);
-    const shortDropoffName = await getPlaceName(carpoolDropoffLocation);
-
-    // Geocode the original full input addresses to coordinates
-    const pickupCoords = await geocodeAddress(carpoolPickupLocation);
-    const dropoffCoords = await geocodeAddress(carpoolDropoffLocation);
-
-    // Fetch directions for duration/distance text
+    // Fetch directions for duration/distance text using the provided GeoJSON coordinates
     let carpoolDurationText = "N/A";
     let carpoolDistanceText = "N/A";
 
     if (Maps_API_KEY) {
       try {
-        const drivingApiUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(
-          carpoolPickupLocation
-        )}&destination=${encodeURIComponent(
-          carpoolDropoffLocation
-        )}&mode=driving&key=${Maps_API_KEY}`;
+        const drivingApiUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${carpoolPickupCoords.coordinates[1]},${carpoolPickupCoords.coordinates[0]}&destination=${carpoolDropoffCoords.coordinates[1]},${carpoolDropoffCoords.coordinates[0]}&mode=driving&key=${Maps_API_KEY}`;
 
         const drivingResponse = await fetch(drivingApiUrl);
         const drivingData = await drivingResponse.json();
@@ -135,16 +138,26 @@ const createCarpoolRide = async (req, res) => {
       }
     }
 
+    // The payload already provides coordinates in the GeoJSON format, so use them directly
+    const pickupCoordsGeoJSON = {
+      type: "Point",
+      coordinates: payload.carpoolPickupCoords.coordinates,
+    };
+    const dropoffCoordsGeoJSON = {
+      type: "Point",
+      coordinates: payload.carpoolDropoffCoords.coordinates,
+    };
+
     const newCarpoolRide = new CarpoolRide({
       carpoolMainUserId: authenticatedUserId,
-      carpoolPickupLocation: shortPickupName,
-      carpoolDropoffLocation: shortDropoffName,
-      carpoolPickupCoords: pickupCoords,
-      carpoolDropoffCoords: dropoffCoords,
+      carpoolPickupLocation,
+      carpoolDropoffLocation,
+      carpoolPickupCoords: pickupCoordsGeoJSON,
+      carpoolDropoffCoords: dropoffCoordsGeoJSON,
       carpoolStartTime,
-      carpoolDate: new Date(carpoolDate),
+      carpoolDate: new Date(carpoolStartTime),
       riderIds: [authenticatedUserId],
-      status: status,
+      status: "no-match",
       estimatedPrice,
       carpoolDurationText,
       carpoolDistanceText,

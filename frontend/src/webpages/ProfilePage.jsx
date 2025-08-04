@@ -48,12 +48,16 @@ export default function ProfilePage() {
     displayName: "Loading...", // Changed from 'name' to 'displayName' for consistency with backend
     email: "",
     bio: "",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=placeholder",
+    avatar: null,
     rating: 0,
     totalRides: 0,
     dateOfBirth: undefined, // Changed from string to Date object
     joinDate: undefined, // Changed from string to Date object (will be user.createdAt)
   });
+
+  const [avatarPreview, setAvatarPreview] = useState(
+    user.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=placeholder"
+  );
 
   const [originalProfileData, setOriginalProfileData] = useState({
     ...profileData,
@@ -98,12 +102,11 @@ export default function ProfilePage() {
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      handleInputChange("avatar", file);
+
       const reader = new FileReader();
       reader.onloadend = () => {
-        handleInputChange("avatar", reader.result);
-        console.log(
-          "Avatar selected for preview. In a real app, this would be uploaded to cloud storage and the URL saved."
-        );
+        setAvatarPreview(reader.result);
       };
       reader.readAsDataURL(file);
     }
@@ -115,21 +118,20 @@ export default function ProfilePage() {
     setIsSaving(true);
 
     try {
-      const dataToSend = {
-        displayName: profileData.displayName,
-        bio: profileData.bio,
-        avatar: profileData.avatar,
-      };
+      const formData = new FormData();
+      formData.append("displayName", profileData.displayName);
+      formData.append("bio", profileData.bio);
+
+      if (profileData.avatar instanceof File) {
+        formData.append("avatar", profileData.avatar);
+      }
 
       const response = await fetch(
         `${import.meta.env.VITE_API_BASE_URL}/update-profile`,
         {
           method: "PATCH", // Using PATCH for partial updates
-          headers: {
-            "Content-Type": "application/json",
-          },
           credentials: "include",
-          body: JSON.stringify(dataToSend),
+          body: formData,
         }
       );
 
@@ -373,7 +375,7 @@ export default function ProfilePage() {
                 <div className="relative mb-5">
                   <Avatar className="h-16 w-16 md:h-20 md:w-20">
                     <AvatarImage
-                      src={profileData.avatar}
+                      src={avatarPreview}
                       alt={profileData.displayName}
                     />
                     <AvatarFallback className="text-lg md:text-xl">

@@ -61,15 +61,12 @@ const createUserJourney = async (req, res) => {
   }
 
   try {
-    const originCoords = await geocodeAddress(journeyOrigin);
-    const destinationCoords = await geocodeAddress(journeyDestination);
-
     const newUserJourney = new UserJourney({
       userId,
-      journeyOrigin,
-      journeyDestination,
-      journeyOriginCoords: originCoords,
-      journeyDestinationCoords: destinationCoords,
+      journeyOrigin: journeyOrigin.name,
+      journeyDestination: journeyDestination.name,
+      journeyOriginCoords: journeyOrigin.location,
+      journeyDestinationCoords: journeyDestination.location,
       preferredDateTime: new Date(preferredDateTime),
       passengersCount,
       status: "pending-selection",

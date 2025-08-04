@@ -19,7 +19,6 @@ import {
   ConversationListPage,
   ForgotPasswordPage,
   ResetPasswordPage,
-  VerifyEmailPage,
 } from "./webpages"; // Import your pages
 import { useAuth } from "./contexts/authContext"; // Import the useAuth hook
 import ProtectedRoute from "./components/ProtectedRoute"; // Import ProtectedRoute
@@ -35,12 +34,6 @@ const App = () => {
           <Route
             path="/"
             element={!isAuthenticated ? <LoginPage /> : <Navigate to="/home" />}
-          />
-          <Route
-            path="/verify"
-            element={
-              !isAuthenticated ? <VerifyEmailPage /> : <Navigate to="/home" />
-            }
           />
           <Route
             path="/login"

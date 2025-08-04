@@ -37,8 +37,13 @@ const SearchFilters = ({ onSearch = () => {} }) => {
       const rounded = roundToNext10Min(now);
       return rounded.toTimeString().slice(0, 5);
     })(),
-    sortBy: "nearest",
+    sortBy: "earliest",
   });
+
+  // This useEffect now runs only once on component mount to perform an initial search
+  useEffect(() => {
+    onSearch(filters);
+  }, []); // Empty dependency array ensures this runs only once
 
   useEffect(() => {
     if (!filters.date || !filters.timeOfDay) return;
@@ -67,19 +72,6 @@ const SearchFilters = ({ onSearch = () => {} }) => {
     }
   }, [filters.date, filters.timeOfDay]);
 
-  const hasFiredInitialSearch = useRef(false);
-
-  useEffect(() => {
-    if (
-      !hasFiredInitialSearch.current &&
-      filters.pickUpLat !== null &&
-      filters.pickUpLng !== null
-    ) {
-      onSearch(filters);
-      hasFiredInitialSearch.current = true;
-    }
-  }, [filters.pickUpLat, filters.pickUpLng]);
-
   const getMinTime = () => {
     const selectedDate = new Date(filters.date);
     selectedDate.setHours(0, 0, 0, 0);
@@ -95,55 +87,6 @@ const SearchFilters = ({ onSearch = () => {} }) => {
     }
     return "00:00";
   };
-
-  useEffect(() => {
-    const setCurrentLocationAsPickup = async () => {
-      if (!navigator.geolocation) {
-        console.warn("Geolocation not supported");
-        return;
-      }
-
-      try {
-        const position = await new Promise((resolve, reject) =>
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: 5000,
-            maximumAge: 0,
-          })
-        );
-
-        const { latitude, longitude } = position.coords;
-
-        const backendGeocodeUrl = `${
-          import.meta.env.VITE_API_BASE_URL
-        }/directions/geocode?lat=${latitude}&lng=${longitude}`;
-        const response = await fetch(backendGeocodeUrl, {
-          method: "GET",
-          credentials: "include",
-        });
-        const data = await response.json();
-
-        if (response.ok && data.address) {
-          setFilters((prev) => ({
-            ...prev,
-            pickUpLocation: data.address,
-            pickUpLat: latitude,
-            pickUpLng: longitude,
-          }));
-        } else {
-          setFilters((prev) => ({
-            ...prev,
-            pickUpLat: latitude,
-            pickUpLng: longitude,
-          }));
-        }
-      } catch (err) {
-        console.warn("Could not get current location:", err);
-      }
-    };
-
-    setCurrentLocationAsPickup();
-  }, []);
 
   const [isLocatingPickUp, setIsLocatingPickUp] = useState(false);
   const [isLocatingDropOff, setIsLocatingDropOff] = useState(false);
@@ -202,13 +145,14 @@ const SearchFilters = ({ onSearch = () => {} }) => {
             pickUpLat: latitude,
             pickUpLng: longitude,
           }));
-        } else if (field === "dropOffLocation")
+        } else if (field === "dropOffLocation") {
           dropOffPlaceSelectedRef.current = true;
-        setFilters((prev) => ({
-          ...prev,
-          dropOffLat: latitude,
-          dropOffLng: longitude,
-        }));
+          setFilters((prev) => ({
+            ...prev,
+            dropOffLat: latitude,
+            dropOffLng: longitude,
+          }));
+        }
       } else {
         setApiError(data.message || "Could not determine current address.");
       }

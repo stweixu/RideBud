@@ -14,11 +14,6 @@ const validateProfileUpdate = [
     .optional()
     .isLength({ max: 200 })
     .withMessage("Bio cannot exceed 200 characters"),
-
-  body("avatar")
-    .optional()
-    .isString()
-    .withMessage("Invalid avatar format (expected string/URL)"), // Changed to isString as frontend sends base64 for preview
 ];
 
 module.exports = validateProfileUpdate;

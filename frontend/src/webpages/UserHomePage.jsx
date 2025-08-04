@@ -14,6 +14,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 const UserHomePage = () => {
   const { resetJourneys, setResetJourneys } = useAuth(); // get from context
@@ -144,13 +145,21 @@ const UserHomePage = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
       <main className="container mx-auto px-4 pb-6 flex flex-col flex-grow ">
-        <UpcomingRideCard upcomingRide={upcomingData} />
+        {/* Conditional rendering for the upcoming ride section */}
+        {loading ? (
+          <div className="flex justify-center items-center h-48 bg-white rounded-lg shadow-sm my-4">
+            <Loader2 className="h-8 w-8 animate-spin text-green-600" />
+            <p className="ml-2 text-gray-700">Loading your upcoming ride...</p>
+          </div>
+        ) : (
+          <UpcomingRideCard upcomingRide={upcomingData} />
+        )}
 
         <SearchFilters onSearch={handleSearch} />
 
         <div
           className="flex flex-col md:flex-row gap-4 flex-grow
-                items-stretch md:items-start w-[90%] mx-auto"
+               items-stretch md:items-start w-[90%] mx-auto"
         >
           <div className="flex-grow md:flex-grow-[3]">
             <MarketplaceRideList carpoolRides={searchResults} />

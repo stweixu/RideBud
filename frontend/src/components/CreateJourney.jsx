@@ -33,9 +33,16 @@ const CreateJourney = ({
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
+  // Updated state to store name and GeoJSON location data
   const [formData, setFormData] = useState({
-    journeyOrigin: "", // String
-    journeyDestination: "", // String
+    journeyOrigin: {
+      name: "",
+      location: null,
+    },
+    journeyDestination: {
+      name: "",
+      location: null,
+    },
     preferredDateTime: undefined,
     passengersCount: undefined,
   });
@@ -65,31 +72,57 @@ const CreateJourney = ({
 
   const handleOriginPlaceSelected = (place) => {
     console.log("=== ORIGIN PLACE SELECTED ===");
-    console.log("Data received from Autocomplete:", place); // This now contains `name` directly
-    console.log("Original Google Name:", place.originalGoogleName);
-    console.log("Formatted Address:", place.originalGoogleFormattedAddress);
-    console.log("Chosen Name (for display/save):", place.name); // Use place.name
-    console.log("Place ID:", place.placeId);
-    console.log("Coordinates:", place.coordinates);
+    console.log("Data received from Autocomplete:", place);
+    console.log("Original Google Name:", place.name);
+    console.log("Formatted Address:", place.formatted_address);
+    console.log("Chosen Name (for display/save):", place.name);
+    console.log("Place ID:", place.place_id);
+    console.log(
+      "Coordinates:",
+      place.geometry?.location?.lat(),
+      place.geometry?.location?.lng()
+    );
     console.log("===============================");
 
-    // Save only the 'name' (shortest one chosen by Autocomplete)
-    handleInputChange("journeyOrigin", place.name);
+    // Store both the name and the GeoJSON location data
+    handleInputChange("journeyOrigin", {
+      name: place.name,
+      location: {
+        type: "Point",
+        coordinates: [
+          place.geometry.location.lng(),
+          place.geometry.location.lat(),
+        ],
+      },
+    });
     originPlaceSelectedRef.current = true;
   };
 
   const handleDestinationPlaceSelected = (place) => {
     console.log("=== DESTINATION PLACE SELECTED ===");
-    console.log("Data received from Autocomplete:", place); // This now contains `name` directly
-    console.log("Original Google Name:", place.originalGoogleName);
-    console.log("Formatted Address:", place.originalGoogleFormattedAddress);
-    console.log("Chosen Name (for display/save):", place.name); // Use place.name
-    console.log("Place ID:", place.placeId);
-    console.log("Coordinates:", place.coordinates);
+    console.log("Data received from Autocomplete:", place);
+    console.log("Original Google Name:", place.name);
+    console.log("Formatted Address:", place.formatted_address);
+    console.log("Chosen Name (for display/save):", place.name);
+    console.log("Place ID:", place.place_id);
+    console.log(
+      "Coordinates:",
+      place.geometry?.location?.lat(),
+      place.geometry?.location?.lng()
+    );
     console.log("===================================");
 
-    // Save only the 'name' (shortest one chosen by Autocomplete)
-    handleInputChange("journeyDestination", place.name);
+    // Store both the name and the GeoJSON location data
+    handleInputChange("journeyDestination", {
+      name: place.name,
+      location: {
+        type: "Point",
+        coordinates: [
+          place.geometry.location.lng(),
+          place.geometry.location.lat(),
+        ],
+      },
+    });
     destinationPlaceSelectedRef.current = true;
   };
 
@@ -98,13 +131,13 @@ const CreateJourney = ({
       // Check if no place was selected OR if the formData value is empty after blur
       if (
         !originPlaceSelectedRef.current &&
-        formData.journeyOrigin.trim() !== ""
+        formData.journeyOrigin.name.trim() !== ""
       ) {
         setApiError(
           "Please select a valid 'Start Location' from the dropdown suggestions."
         );
         console.log("handleOriginBlur triggered - clearing origin input");
-        handleInputChange("journeyOrigin", ""); // Clear the string
+        handleInputChange("journeyOrigin", { name: "", location: null }); // Clear the object
       }
       originPlaceSelectedRef.current = false;
     }, 200);
@@ -115,7 +148,7 @@ const CreateJourney = ({
       // Check if no place was selected OR if the formData value is empty after blur
       if (
         !destinationPlaceSelectedRef.current &&
-        formData.journeyDestination.trim() !== ""
+        formData.journeyDestination.name.trim() !== ""
       ) {
         setApiError(
           "Please select a valid 'Destination' from the dropdown suggestions."
@@ -123,7 +156,7 @@ const CreateJourney = ({
         console.log(
           "handleDestinationBlur triggered - clearing destination input"
         );
-        handleInputChange("journeyDestination", ""); // Clear the string
+        handleInputChange("journeyDestination", { name: "", location: null }); // Clear the object
       }
       destinationPlaceSelectedRef.current = false;
     }, 200);
@@ -204,8 +237,15 @@ const CreateJourney = ({
       const data = await response.json();
 
       if (response.ok && data.address) {
-        // For current location, we only have address. Use it as the 'name'.
-        handleInputChange(field, data.address);
+        // Create the new GeoJSON object for the location
+        const newLocation = {
+          name: data.address,
+          location: {
+            type: "Point",
+            coordinates: [longitude, latitude],
+          },
+        };
+        handleInputChange(field, newLocation);
         if (field === "journeyOrigin") originPlaceSelectedRef.current = true;
         if (field === "journeyDestination")
           destinationPlaceSelectedRef.current = true;
@@ -247,10 +287,12 @@ const CreateJourney = ({
       return;
     }
 
-    // Consolidated validation - now checking if the strings are non-empty
+    // Consolidated validation - checking for required nested properties
     if (
-      !formData.journeyOrigin.trim() ||
-      !formData.journeyDestination.trim() ||
+      !formData.journeyOrigin.name.trim() ||
+      !formData.journeyOrigin.location ||
+      !formData.journeyDestination.name.trim() ||
+      !formData.journeyDestination.location ||
       !formData.preferredDateTime ||
       !formData.passengersCount
     ) {
@@ -271,8 +313,8 @@ const CreateJourney = ({
 
     try {
       const payload = {
-        journeyOrigin: formData.journeyOrigin, // Now just the name string
-        journeyDestination: formData.journeyDestination, // Now just the name string
+        journeyOrigin: formData.journeyOrigin,
+        journeyDestination: formData.journeyDestination,
         preferredDateTime: formData.preferredDateTime.toISOString(),
         passengersCount: parseInt(formData.passengersCount, 10),
       };
@@ -301,8 +343,8 @@ const CreateJourney = ({
 
       setNotification("Your journey request has been submitted successfully!");
       setFormData({
-        journeyOrigin: "",
-        journeyDestination: "",
+        journeyOrigin: { name: "", location: null },
+        journeyDestination: { name: "", location: null },
         preferredDateTime: undefined,
         passengersCount: undefined,
       });
@@ -351,9 +393,14 @@ const CreateJourney = ({
                   <GoogleMapsAutocomplete
                     id="journeyOrigin"
                     placeholder="Enter start address"
-                    value={formData.journeyOrigin}
-                    onChange={(e) =>
-                      handleInputChange("journeyOrigin", e.target.value)
+                    value={formData.journeyOrigin.name} // Display the name
+                    onChange={
+                      (e) =>
+                        handleInputChange("journeyOrigin", {
+                          ...formData.journeyOrigin,
+                          name: e.target.value,
+                          location: null,
+                        }) // Clear location if name changes
                     }
                     onPlaceSelected={handleOriginPlaceSelected}
                     onUseCurrentLocation={() =>
@@ -379,9 +426,14 @@ const CreateJourney = ({
                   <GoogleMapsAutocomplete
                     id="journeyDestination"
                     placeholder="Enter destination address"
-                    value={formData.journeyDestination}
-                    onChange={(e) =>
-                      handleInputChange("journeyDestination", e.target.value)
+                    value={formData.journeyDestination.name} // Display the name
+                    onChange={
+                      (e) =>
+                        handleInputChange("journeyDestination", {
+                          ...formData.journeyDestination,
+                          name: e.target.value,
+                          location: null,
+                        }) // Clear location if name changes
                     }
                     onPlaceSelected={handleDestinationPlaceSelected}
                     onUseCurrentLocation={() =>

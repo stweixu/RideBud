@@ -45,7 +45,7 @@ const calculateETA = (startTime, addMinutes) => {
     if (typeof startTime === "string") {
       // This path is primarily for parsing "HH:MM am/pm"
       // For ISO strings, new Date(string) is preferred.
-      // If startTime is an ISO string, new Date(startTime) handles it
+      // If startTime is an ISO string, new Date(string) handles it
       date = new Date(startTime);
       if (isNaN(date.getTime())) {
         // If new Date(string) failed, try old HH:MM parsing
@@ -245,7 +245,7 @@ const processSteps = (
     // Skip very short walking steps unless it's the only step in the leg
     if (
       step.travel_mode === "WALKING" &&
-      step.distance.value < 150 &&
+      step.distance.value < 250 &&
       segmentLeg.steps.length > 1 // Only skip if there are other steps in the leg
     ) {
       continue;
@@ -475,6 +475,14 @@ const getRecommendationsForUserJourney = async (req, res) => {
       return res.status(404).json({ message: "User Journey not found" });
     }
 
+    // --- UPDATED: Extract coordinates from the correct fields ---
+    const [originLng, originLat] = userJourney.journeyOriginCoords.coordinates;
+    const [destinationLng, destinationLat] =
+      userJourney.journeyDestinationCoords.coordinates;
+
+    const journeyOriginCoords = `${originLat},${originLng}`;
+    const journeyDestinationCoords = `${destinationLat},${destinationLng}`;
+
     // Ensure preferredDateTime is a Date object for consistent use
     const preferredDateTime =
       userJourney.preferredDateTime instanceof Date
@@ -483,15 +491,13 @@ const getRecommendationsForUserJourney = async (req, res) => {
 
     // --- Fastest recommendation - single carpool step only ---
     let fastestRecommendation = null;
-    if (userJourney.journeyOrigin && userJourney.journeyDestination) {
-      const origin = userJourney.journeyOrigin;
-      const destination = userJourney.journeyDestination;
-
-      const drivingApiUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(
-        origin
-      )}&destination=${encodeURIComponent(
-        destination
-      )}&mode=driving&key=${Maps_API_KEY}`;
+    // Check if the coordinate data exists before making the API call
+    if (
+      userJourney.journeyOriginCoords &&
+      userJourney.journeyDestinationCoords
+    ) {
+      // Use the coordinates for the API call
+      const drivingApiUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${journeyOriginCoords}&destination=${journeyDestinationCoords}&mode=driving&key=${Maps_API_KEY}`;
 
       const drivingResponse = await fetch(drivingApiUrl);
       const drivingData = await drivingResponse.json();
@@ -518,11 +524,18 @@ const getRecommendationsForUserJourney = async (req, res) => {
           cost: `$${splitFastestCost.toFixed(2)}`,
           icon: "Car",
           distance: { text: leg.distance.text, value: leg.distance.value },
-          start_address: origin,
-          end_address: destination,
-          // Ensure start/end locations from Google Maps API are standardized
-          start_location: getLatLngFromLocation(leg.start_location),
-          end_location: getLatLngFromLocation(leg.end_location),
+          // Use the correct string fields for addresses
+          start_address: userJourney.journeyOrigin,
+          end_address: userJourney.journeyDestination,
+          // Store the original GeoJSON locations in the steps
+          start_location: {
+            lat: userJourney.journeyOriginCoords.coordinates[1],
+            lng: userJourney.journeyOriginCoords.coordinates[0],
+          },
+          end_location: {
+            lat: userJourney.journeyDestinationCoords.coordinates[1],
+            lng: userJourney.journeyDestinationCoords.coordinates[0],
+          },
         };
 
         fastestRecommendation = {
@@ -538,6 +551,8 @@ const getRecommendationsForUserJourney = async (req, res) => {
           eta: calculateETA(preferredDateTime, totalDurationMins),
           totalDistance: leg.distance.text,
           steps: [carpoolStep],
+          carpoolPickupCoords: userJourney.journeyOriginCoords, // Original GeoJSON
+          carpoolDropoffCoords: userJourney.journeyDestinationCoords, // Original GeoJSON
         };
       } else {
         // Log the actual status for debugging API key issues
@@ -550,8 +565,13 @@ const getRecommendationsForUserJourney = async (req, res) => {
     const balancedRide = await findBalancedRide(userJourney);
 
     if (balancedRide) {
-      const origin = userJourney.journeyOrigin;
-      const destination = userJourney.journeyDestination; // This is the overall final destination
+      // --- NEW: Extract balanced ride coordinates ---
+      const [pickupLng, pickupLat] =
+        balancedRide.carpoolPickupCoords.coordinates;
+      const [dropoffLng, dropoffLat] =
+        balancedRide.carpoolDropoffCoords.coordinates;
+      const carpoolPickupCoords = `${pickupLat},${pickupLng}`;
+      const carpoolDropoffCoords = `${dropoffLat},${dropoffLng}`;
 
       // NEW LOGIC START: Anchor timing to balancedRide.carpoolStartTime
       let actualCarpoolStartTimeDate;
@@ -587,11 +607,8 @@ const getRecommendationsForUserJourney = async (req, res) => {
         preferredDateTime.getTime() / 1000
       );
 
-      const originToPickupUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(
-        origin
-      )}&destination=${encodeURIComponent(
-        balancedRide.carpoolPickupLocation
-      )}&mode=transit&key=${Maps_API_KEY}&departure_time=${departureTimeForTransitToPickup}`;
+      // Use coordinates for the API call
+      const originToPickupUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${journeyOriginCoords}&destination=${carpoolPickupCoords}&mode=transit&key=${Maps_API_KEY}&departure_time=${departureTimeForTransitToPickup}`;
 
       // Fetch data for origin to pickup
       const originToPickupRes = await fetch(originToPickupUrl);
@@ -633,11 +650,8 @@ const getRecommendationsForUserJourney = async (req, res) => {
         carpoolDropoffTimeDate.getTime() / 1000
       );
 
-      const dropoffToDestinationUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(
-        balancedRide.carpoolDropoffLocation
-      )}&destination=${encodeURIComponent(
-        destination
-      )}&mode=transit&key=${Maps_API_KEY}&departure_time=${departureTimeForTransitFromDropoff}`; // Use calculated carpool dropoff time as departure for next leg
+      // Use coordinates for the API call
+      const dropoffToDestinationUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${carpoolDropoffCoords}&destination=${journeyDestinationCoords}&mode=transit&key=${Maps_API_KEY}&departure_time=${departureTimeForTransitFromDropoff}`; // Use calculated carpool dropoff time as departure for next leg
 
       // Fetch data for dropoff to destination
       const dropoffToDestinationRes = await fetch(dropoffToDestinationUrl);
@@ -678,15 +692,23 @@ const getRecommendationsForUserJourney = async (req, res) => {
         eta: "N/A", // Will be set cumulatively below
         start_address: balancedRide.carpoolPickupLocation || "",
         end_address: balancedRide.carpoolDropoffLocation || "",
+
         matchedRideId: balancedRide._id,
-        start_location: getLatLngFromLocation(balancedRide.carpoolPickupCoords),
-        end_location: getLatLngFromLocation(balancedRide.carpoolDropoffCoords),
+        // Store the GeoJSON coordinates from the balanced ride
+        start_location: {
+          lat: balancedRide.carpoolPickupCoords.coordinates[1],
+          lng: balancedRide.carpoolPickupCoords.coordinates[0],
+        },
+        end_location: {
+          lat: balancedRide.carpoolDropoffCoords.coordinates[1],
+          lng: balancedRide.carpoolDropoffCoords.coordinates[0],
+        },
       };
 
       const stepsFromDropoff = processSteps(
         dropoffToDestinationData,
         true,
-        destination,
+        userJourney.journeyDestination, // Use the correct string field for the final destination
         balancedRide,
         preferredDateTime // Still pass preferredDateTime for cost calculation
       );

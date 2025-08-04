@@ -3,6 +3,9 @@ const passport = require("passport");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 
+const frontendBaseUrl =
+  process.env.FRONTEND_BASE_URL || "http://localhost:5173";
+
 router.get(
   "/",
   passport.authenticate("google", { scope: ["profile", "email"] })
