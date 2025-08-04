@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const User = require("../models/User"); 
+const User = require("../models/User");
 
 const loginUserController = async (req, res) => {
   const { email, password } = req.body;
@@ -28,9 +28,9 @@ const loginUserController = async (req, res) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: false,
-      // secure: process.env.NODE_ENV === "production", 
+      // secure: process.env.NODE_ENV === "production",
       // Ensure cookies are sent over HTTPS in production
-      sameSite: "Strict", // Prevents CSRF attacks
+      sameSite: "lax", // Prevents CSRF attacks
       maxAge: 3600000 * 4, // Set the expiry time, 4 hours
       path: "/",
     });
