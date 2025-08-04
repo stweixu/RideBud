@@ -16,7 +16,7 @@ import {
   DollarSign,
   Loader2,
 } from "lucide-react";
-import Navbar from "@/components/navbar";
+import Navbar from "@/components/Navbar";
 import BrandFooter from "@/components/BrandFooter";
 import { useNavigate } from "react-router-dom";
 import MyJourneyCard from "@/components/MyJourneyCard";

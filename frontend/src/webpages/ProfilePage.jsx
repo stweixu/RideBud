@@ -24,7 +24,7 @@ import {
   AlertCircle,
   Calendar as CalendarIcon, // Added CalendarIcon for dateOfBirth
 } from "lucide-react";
-import Navbar from "@/components/navbar"; // Adjusted import path
+import Navbar from "@/components/Navbar"; // Adjusted import path
 import BrandFooter from "@/components/BrandFooter"; // Adjusted import path
 import { useAuth } from "@/contexts/AuthContext"; // Import useAuth context
 import { fetchUserData } from "@/utils/api"; // Utility to refetch user data

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import Navbar from "@/components/navbar";
+import Navbar from "@/components/Navbar";
 import BrandFooter from "@/components/BrandFooter";
 import RecommendedJourneys from "@/components/RecommendedJourneys";
 import { Loader2, AlertCircle } from "lucide-react";

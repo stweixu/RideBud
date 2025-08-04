@@ -8,7 +8,9 @@ const socketHandler = require("./socketHandler");
 const passport = require("passport");
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
+const cron = require("node-cron");
 require("./services/googleStrategy");
+require("./utility/cleanUpScheduler");
 
 const app = express();
 const server = http.createServer(app);
