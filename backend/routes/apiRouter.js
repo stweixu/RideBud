@@ -22,6 +22,7 @@ const marketplaceRideRouter = require("./marketplace-ride/marketplaceRideRouter"
 const chatRouter = require("./chatRouter");
 const forgotPasswordRouter = require("./forgotPasswordRouter");
 const googleLoginRouter = require("./account-creation/googleLogin");
+const testRouter = require("./testRouter"); // Importing the test router
 
 // Define the routeMap object to map paths to routers
 const routeMap = {
@@ -43,6 +44,7 @@ const routeMap = {
   "/chat": chatRouter,
   "/forgot-password": forgotPasswordRouter,
   "/auth/google": googleLoginRouter,
+  "/test": testRouter, // Assuming testRouter is defined in backend/routes/testRouter.js
 };
 
 // Dynamically use routes from the routeMap object
