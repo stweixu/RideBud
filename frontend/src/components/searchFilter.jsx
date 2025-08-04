@@ -7,6 +7,8 @@ import { Calendar as CalendarComponent } from "./ui/calendar";
 import GoogleMapsAutocomplete from "./GoogleMapsAutocomplete";
 import { cn } from "@/lib/utils";
 
+//renamed
+
 const SearchFilters = ({ onSearch = () => {} }) => {
   const SORT_OPTIONS = [
     { key: "nearest", label: "Nearest" },

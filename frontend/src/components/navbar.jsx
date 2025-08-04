@@ -13,6 +13,8 @@ import { useAuth } from "../contexts/AuthContext";
 import { Button } from "./ui/button";
 import { useChatUnreadCount } from "../contexts/ChatUnreadCountContext";
 
+//renamed
+
 const NavbarButton = ({
   icon: Icon,
   text,
