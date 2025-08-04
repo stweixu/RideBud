@@ -8,6 +8,8 @@ const socketHandler = require("./socketHandler");
 const passport = require("passport");
 const session = require("express-session");
 require("./services/googleStrategy");
+require("cleanupScheduler");
+require("updateDates");
 
 const app = express();
 const server = http.createServer(app);
