@@ -9,7 +9,7 @@ import {
   X,
 } from "lucide-react"; // Removed Star import
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/authContext";
+import { useAuth } from "../contexts/AuthContext";
 import { Button } from "./ui/button";
 import { useChatUnreadCount } from "../contexts/ChatUnreadCountContext";
 

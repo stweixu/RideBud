@@ -2,7 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.jsx";
-import { AuthProvider } from "./contexts/authProvider";
+import { AuthProvider } from "./contexts/AuthProvider";
 import { ChakraProvider } from "@chakra-ui/react";
 import { ChatUnreadCountProvider } from "./contexts/ChatUnreadCountContext";
 import { system } from "@chakra-ui/react/preset";

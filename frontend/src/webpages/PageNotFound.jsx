@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Car, Home, ArrowLeft } from "lucide-react";
-import { useAuth } from "../contexts/authContext";
+import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import LogoBar from "../components/LogoBar";

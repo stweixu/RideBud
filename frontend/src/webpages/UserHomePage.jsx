@@ -4,7 +4,7 @@ import SearchFilters from "../components/SearchFilter";
 import BrandFooter from "@/components/BrandFooter";
 import UpcomingRideCard from "@/components/UpcomingRideCard";
 import MarketplaceRideList from "@/components/MarketplaceRideList";
-import { useAuth } from "../contexts/authContext";
+import { useAuth } from "../contexts/AuthContext";
 import {
   Dialog,
   DialogContent,

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ConversationList from "@/components/ConversationList";
 import ChatBubble from "@/components/ChatBubble";
-import { useAuth } from "@/contexts/authContext";
+import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/Navbar";
 import BrandFooter from "@/components/BrandFooter";
 import { ChevronLeft } from "lucide-react"; // Ensure this is imported for the ChatBubble back button

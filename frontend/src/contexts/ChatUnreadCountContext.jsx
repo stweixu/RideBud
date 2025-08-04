@@ -6,7 +6,7 @@ import React, {
   useCallback,
 } from "react";
 
-import { useAuth } from "./authContext";
+import { useAuth } from "./AuthContext";
 
 // Create the context
 const ChatUnreadCountContext = createContext(null);

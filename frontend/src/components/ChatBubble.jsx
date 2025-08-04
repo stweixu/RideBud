@@ -10,10 +10,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Send, X, ChevronLeft } from "lucide-react"; 
-import { useAuth } from "@/contexts/authContext";
+import { Send, X, ChevronLeft } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import socket from "@/utils/socket";
-import { cn } from "@/lib/utils"; 
+import { cn } from "@/lib/utils";
 
 const ChatBubble = ({
   inline = false,

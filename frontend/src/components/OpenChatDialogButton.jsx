@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MessageCircle } from "lucide-react";
 import ChatBubble from "@/components/ChatBubble";
-import { useAuth } from "@/contexts/authContext"; // Assuming you have auth context
+import { useAuth } from "@/contexts/AuthContext"; // Assuming you have auth context
 
 /**
  * A reusable component that renders a "Message" button.

@@ -20,7 +20,7 @@ import {
   ForgotPasswordPage,
   ResetPasswordPage,
 } from "./webpages"; // Import your pages
-import { useAuth } from "./contexts/authContext"; // Import the useAuth hook
+import { useAuth } from "./contexts/AuthContext"; // Import the useAuth hook
 import ProtectedRoute from "./components/ProtectedRoute"; // Import ProtectedRoute
 import "font-awesome/css/font-awesome.min.css";
 

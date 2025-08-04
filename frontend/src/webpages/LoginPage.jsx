@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/authContext"; // Import useAuth
+import { useAuth } from "../contexts/AuthContext"; // Import useAuth
 import LogoBar from "@/components/LogoBar";
 import BrandFooter from "@/components/BrandFooter";
 import { useSearchParams } from "react-router-dom";
