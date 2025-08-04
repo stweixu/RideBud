@@ -6,6 +6,5 @@ export const AuthContext = createContext();
 
 // Custom hook to use AuthContext
 export const useAuth = () => {
-  s;
   return useContext(AuthContext);
 };
