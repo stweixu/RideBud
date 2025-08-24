@@ -20,6 +20,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "https://ride-bud.vercel.app",
   "https://ride-510m73a1j-stweixus-projects.vercel.app",
+  "https://ride-bud-git-main-stweixus-projects.vercel.app",
 ];
 
 // Connect to MongoDB

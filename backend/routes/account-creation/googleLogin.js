@@ -13,7 +13,9 @@ router.get(
 
 router.get(
   "/callback",
-  passport.authenticate("google", { failureRedirect: "/login" }),
+  passport.authenticate("google", {
+    failureRedirect: `${frontendBaseUrl}/login`,
+  }),
   (req, res) => {
     const payload = { userId: req.user._id };
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
