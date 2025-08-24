@@ -15,20 +15,47 @@ require("./utility/cleanUpScheduler");
 const app = express();
 const server = http.createServer(app);
 
-const allowedOrigins = ["http://localhost:5173", "https://ride-bud.vercel.app"];
+// Allowed origins for CORS
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://ride-bud.vercel.app",
+  "https://ride-510m73a1j-stweixus-projects.vercel.app",
+];
 
-const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins,
-    credentials: true,
-  },
-});
-
+// Connect to MongoDB
 connectDB();
 
+// Middlewares
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
+// CORS middleware
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true); // Allow non-browser requests
+      if (allowedOrigins.indexOf(origin) === -1) {
+        return callback(
+          new Error(`CORS policy does not allow access from ${origin}`),
+          false
+        );
+      }
+      return callback(null, true);
+    },
+    credentials: true,
+  })
+);
+
+// Handle preflight OPTIONS requests
+app.options(
+  "*",
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+);
+
+// Session middleware
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
@@ -39,38 +66,28 @@ app.use(
       collectionName: "sessions",
     }),
     cookie: {
-      secure: process.env.NODE_ENV === "production", // true in prod if HTTPS
+      secure: process.env.NODE_ENV === "production", // HTTPS in production
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     },
   })
 );
 
+app.use(cookieParser());
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // allow requests with no origin (like curl or Postman)
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.indexOf(origin) === -1) {
-        const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
-        return callback(new Error(msg), false);
-      }
-
-      return callback(null, true);
-    },
-    credentials: true,
-  })
-);
-
-app.use(cookieParser());
-
+// Routes
 app.use("/api", require("./routes/apiRouter"));
 
-// Pass the io instance to socket handler
+// WebSocket setup
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    credentials: true,
+  },
+});
 socketHandler(io);
 
+// Start server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
