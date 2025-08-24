@@ -34,24 +34,15 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // Allow non-browser requests
-      if (allowedOrigins.indexOf(origin) === -1) {
-        return callback(
-          new Error(`CORS policy does not allow access from ${origin}`),
-          false
-        );
+      if (!origin) return callback(null, true); // allow non-browser requests
+      if (allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+        return callback(null, true);
       }
-      return callback(null, true);
+      return callback(
+        new Error(`CORS policy does not allow access from ${origin}`),
+        false
+      );
     },
-    credentials: true,
-  })
-);
-
-// Handle preflight OPTIONS requests
-app.options(
-  "*",
-  cors({
-    origin: allowedOrigins,
     credentials: true,
   })
 );
@@ -69,6 +60,8 @@ app.use(
     cookie: {
       secure: process.env.NODE_ENV === "production", // HTTPS in production
       maxAge: 24 * 60 * 60 * 1000, // 1 day
+      sameSite: "None",
+      httpOnly: true,
     },
   })
 );
@@ -83,7 +76,13 @@ app.use("/api", require("./routes/apiRouter"));
 // WebSocket setup
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+        return callback(null, true);
+      }
+      callback(new Error("CORS not allowed"), false);
+    },
     credentials: true,
   },
 });
