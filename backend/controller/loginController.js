@@ -30,7 +30,7 @@ const loginUserController = async (req, res) => {
       secure: false,
       // secure: process.env.NODE_ENV === "production",
       // Ensure cookies are sent over HTTPS in production
-      sameSite: "lax", // Prevents CSRF attacks
+      sameSite: "None", // Prevents CSRF attacks
       maxAge: 3600000 * 4, // Set the expiry time, 4 hours
       path: "/",
     });

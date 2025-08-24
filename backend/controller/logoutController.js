@@ -4,7 +4,7 @@ const logOutController = async (req, res) => {
     res.clearCookie("token", {
       httpOnly: true,
       secure: false,
-      sameSite: "Strict",
+      sameSite: "None",
       path: "/",
     });
 
@@ -12,6 +12,6 @@ const logOutController = async (req, res) => {
   } catch (err) {
     res.status(500).json({ msg: "Server error" });
   }
-}
+};
 
 module.exports = { logOutController };
