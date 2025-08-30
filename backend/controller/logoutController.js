@@ -1,10 +1,11 @@
 const logOutController = async (req, res) => {
   try {
-    // Clear the cookie
+    const isProduction = process.env.NODE_ENV === "production";
+
     res.clearCookie("token", {
       httpOnly: true,
-      secure: false,
-      sameSite: "None",
+      secure: isProduction,
+      sameSite: isProduction ? "None" : "Lax",
       path: "/",
     });
 

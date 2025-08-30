@@ -3,38 +3,46 @@ const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const connectDB = require("./config/db");
-const socketHandler = require("./socketHandler");
-const passport = require("passport");
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
-const cron = require("node-cron");
+const passport = require("passport");
+
+const connectDB = require("./config/db");
+const socketHandler = require("./socketHandler");
 require("./services/googleStrategy");
-require("./utility/cleanUpScheduler");
+
+// Import the cron setup functions
+const { setupCleanupCron } = require("./utility/cleanUpScheduler");
+const { incrementDummyDatesCron } = require("./utility/dummyDataIncrementer");
 
 const app = express();
 const server = http.createServer(app);
+
+// Trust proxy for secure cookies (Render requirement)
+app.set("trust proxy", 1);
 
 // Allowed origins for CORS
 const allowedOrigins = [
   "http://localhost:5173",
   "https://ride-bud.vercel.app",
-  "https://ride-510m73a1j-stweixus-projects.vercel.app",
   "https://ride-bud-git-main-stweixus-projects.vercel.app",
 ];
 
 // Connect to MongoDB
-connectDB();
+connectDB().then(() => {
+  // Start the crons after DB is connected
+  setupCleanupCron();
+  incrementDummyDatesCron();
+});
 
 // Middlewares
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-// CORS middleware
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // allow non-browser requests
+      if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
         return callback(null, true);
       }
@@ -47,18 +55,22 @@ app.use(
   })
 );
 
+// Handle preflight requests globally
+app.options("*", cors({ origin: allowedOrigins, credentials: true }));
+
 // Session middleware
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    proxy: true, // Required for secure cookies behind proxy
     store: MongoStore.create({
       mongoUrl: process.env.MONGO_ONLINE_URI,
       collectionName: "sessions",
     }),
     cookie: {
-      secure: process.env.NODE_ENV === "production", // HTTPS in production
+      secure: process.env.NODE_ENV === "production",
       maxAge: 24 * 60 * 60 * 1000, // 1 day
       sameSite: "None",
       httpOnly: true,
@@ -76,7 +88,7 @@ app.use("/api", require("./routes/apiRouter"));
 // WebSocket setup
 const io = new Server(server, {
   cors: {
-    origin: function (origin, callback) {
+    origin: (origin, callback) => {
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
         return callback(null, true);

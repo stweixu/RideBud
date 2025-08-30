@@ -370,6 +370,46 @@ export default function LoginPage() {
                   verification and app review requirements.
                 </div>
               </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full text-sm"
+                onClick={async () => {
+                  try {
+                    setLoading(true);
+                    const res = await fetch(
+                      `${import.meta.env.VITE_API_BASE_URL}/login/guest`,
+                      {
+                        method: "POST",
+                        credentials: "include",
+                      }
+                    );
+
+                    if (!res.ok) {
+                      const data = await res.json();
+                      throw new Error(data.msg || "Guest login failed");
+                    }
+
+                    login();
+                    navigate("/");
+                  } catch (err) {
+                    console.error("Guest login error:", err);
+                    setApiError(err.message || "An unexpected error occurred.");
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+              >
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                </svg>
+                Sign in with Test Account
+              </Button>
             </div>
 
             {/* Register Link */}

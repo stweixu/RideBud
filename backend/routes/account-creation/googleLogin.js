@@ -22,14 +22,16 @@ router.get(
       expiresIn: process.env.JWT_EXPIRY,
     });
 
+    const isProduction = process.env.NODE_ENV === "production";
+
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "None",
+      secure: isProduction,
+      sameSite: isProduction ? "None" : "Lax",
       maxAge: 3600000 * 4,
       path: "/",
     });
-    // Successful login, redirect frontend or send JSON
+
     res.redirect(`${frontendBaseUrl}/`);
   }
 );
